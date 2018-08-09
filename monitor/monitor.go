@@ -13,7 +13,7 @@ import (
 	"log"
 	"time"
 
-	sthgetter "github.com/google/certificate-transparency-monitor/sthGetter"
+	"github.com/google/certificate-transparency-monitor/sthgetter"
 )
 
 var (
