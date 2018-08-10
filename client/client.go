@@ -30,26 +30,47 @@ func New(logURL string, hc *http.Client) *LogClient {
 
 // BuildURL builds a URL made up of a base URL, a path and a map of parameters.
 //
-// Example 1:
-//   - Base URL: https://ct.googleapis.com/pilot
-//   - Path: /ct/v1/get-sth-consistency
+// Example:
+//   - Base URL: https://ct.googleapis.com/pilot/
+//   - Path: ct/v1/get-sth-consistency
 //   - Params: map[string]string{"first":"15", "second":"20"}
 //  Result: https://ct.googleapis.com/pilot/ct/v1/get-sth-consistency?first=15&second=20
-// Example 2:
-//   - Base URL: https://ct.googleapis.com/pilot
-//   - Path: /ct/v1/get-sth
-//   - Params: nil
-//  Result: https://ct.googleapis.com/pilot/ct/v1/get-sth
+//
+// When concatenating baseURL, path and params, BuildURL ensures that only one
+// "/" appears between the baseURL and the path, and that no "/" appears between
+// the result of concatenating the baseURL and path, and the params.
+//
+// Example:
+//   - Base URL: https://ct.googleapis.com/pilot/
+//   - Path: /ct/v1/get-sth-consistency/
+//   - Params: map[string]string{"first":"15", "second":"20"}
+//  Result: https://ct.googleapis.com/pilot/ct/v1/get-sth-consistency?first=15&second=20
+//
+// See the tests for further examples.
 func BuildURL(baseURL, path string, params map[string]string) string {
-	withoutParams := fmt.Sprintf("%s%s", baseURL, path)
-	if len(params) > 0 {
-		vals := url.Values{}
-		for k, v := range params {
-			vals.Add(k, v)
-		}
-		return fmt.Sprintf("%s?%s", withoutParams, vals.Encode())
+	var withoutParams string
+	if len(baseURL) > 0 && len(path) > 0 {
+		// If we need to concatenate a non-empty baseURL and a non-empty path,
+		// do it so that exactly one "/" will appear between the two.
+		withoutParams = fmt.Sprintf("%s/%s", strings.TrimRight(baseURL, "/"), strings.TrimLeft(path, "/"))
+	} else {
+		// Otherwise, at least one of them is empty, so just concatenating will
+		// result in the non-empty one (if there is one) remaining unaltered.
+		withoutParams = fmt.Sprintf("%s%s", baseURL, path)
 	}
-	return withoutParams
+
+	if len(params) == 0 {
+		return withoutParams
+	}
+
+	// If there are paramters to be added to the URL, remove any trailing /'s
+	// before adding the parameters.
+	withoutParams = strings.TrimRight(withoutParams, "/")
+	vals := url.Values{}
+	for k, v := range params {
+		vals.Add(k, v)
+	}
+	return fmt.Sprintf("%s?%s", withoutParams, vals.Encode())
 }
 
 // HTTPData contains information about an HTTP request that was made.
