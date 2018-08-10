@@ -11,8 +11,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
+	"github.com/google/certificate-transparency-monitor/client"
 	"github.com/google/certificate-transparency-monitor/sthgetter"
 )
 
@@ -30,5 +32,6 @@ func main() {
 
 	ctx := context.Background()
 
-	sthgetter.Run(ctx, *logURL, *sthGetPeriod)
+	lc := client.New(*logURL, &http.Client{})
+	sthgetter.Run(ctx, lc, *logURL, *sthGetPeriod)
 }

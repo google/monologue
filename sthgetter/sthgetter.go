@@ -6,17 +6,20 @@ import (
 	"context"
 	"log"
 	"time"
+
+	"github.com/google/certificate-transparency-monitor/client"
 )
 
 var logStr = "STH Getter"
 
 type STHGetter struct {
-	url string
+	url       string
+	logClient *client.LogClient
 }
 
-func Run(ctx context.Context, url string, period time.Duration) {
+func Run(ctx context.Context, lc *client.LogClient, url string, period time.Duration) {
 	log.Printf("%s: %s: Started with period %v", url, logStr, period)
-	sg := &STHGetter{url: url}
+	sg := &STHGetter{url: url, logClient: lc}
 
 	t := time.NewTicker(period)
 	for {
@@ -28,8 +31,15 @@ func Run(ctx context.Context, url string, period time.Duration) {
 }
 
 func (sg *STHGetter) GetCheckStoreSTH() {
-	log.Printf("%s: %s: Getting STH...", sg.url, logStr)
-	//TODO(katjoyce): Get STH from Log.
+	// Get STH from Log.
+	log.Printf("%s: %s: getting STH...", sg.url, logStr)
+	_, httpData, getErr := sg.logClient.GetSTH()
+	if getErr != nil {
+		log.Printf("%s: %s: error getting STH: %s", sg.url, logStr, getErr)
+	}
+	if len(httpData.Body) > 0 {
+		log.Printf("%s: %s: response: %s", sg.url, logStr, httpData.Body)
+	}
 
 	//TODO(katjoyce): Store get-sth API call.
 
