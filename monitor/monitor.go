@@ -9,7 +9,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -25,7 +24,6 @@ var (
 
 func main() {
 	flag.Parse()
-	fmt.Println("Log: " + *logURL)
 	if *logURL == "" {
 		log.Fatalf("No Log URL provided.")
 	}
