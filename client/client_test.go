@@ -92,8 +92,10 @@ func fakeServer(statusCode int, body []byte) *httptest.Server {
 	}))
 }
 
-// TODO(katjoyce): Improve this test - it's currently very lightweight.  Try to
-// find a way to test for all error types that could be returned by Get.
+var sth = "{\"tree_size\":344104340,\"timestamp\":1534165797863,\"sha256_root_hash\":\"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=\",\"tree_head_signature\":\"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8=\"}"
+
+// TODO(katjoyce): Improve this test - try to find a way to test for all error
+// types that could be returned by Get.
 func TestGet(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -115,7 +117,7 @@ func TestGet(t *testing.T) {
 		{
 			name:       "no error",
 			statusCode: http.StatusOK,
-			body:       []byte("{\"tree_size\":344104340,\"timestamp\":1534165797863,\"sha256_root_hash\":\"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=\",\"tree_head_signature\":\"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8=\"}"),
+			body:       []byte(sth),
 		},
 	}
 
@@ -127,12 +129,75 @@ func TestGet(t *testing.T) {
 				lc = New(test.url, &http.Client{})
 			}
 
-			got, gotErr := lc.Get(ct.GetSTHPath, nil)
+			got, gotErr := lc.Get("", nil)
 			if gotErrType := reflect.TypeOf(gotErr); gotErrType != test.wantErrType {
-				t.Errorf("Get(_, _): error was of type %s, want %s", gotErrType, test.wantErrType)
+				t.Errorf("Get(_, _): error was of type %v, want %v", gotErrType, test.wantErrType)
+			}
+			if got == nil {
+				t.Fatal("Get(_, _) = nil, _, want an HTTPData containing at least the timing of the request")
+			}
+			if got.Timing == nil || got.Timing.Start.IsZero() || got.Timing.End.IsZero() {
+				t.Errorf("Get(_, _): HTTPData.Timing = %+v, want the Timing to be populated with the timing of the request", got.Timing)
 			}
 			if !bytes.Equal(got.Body, test.body) {
 				t.Errorf("Get(_, _): HTTPData.Body = %s, want %s", got.Body, test.body)
+			}
+		})
+	}
+}
+
+func TestGetAndParse(t *testing.T) {
+	tests := []struct {
+		name        string
+		url         string
+		statusCode  int
+		body        []byte
+		wantErrType reflect.Type
+	}{
+		{
+			name:        "get error",
+			url:         "not-a-real-url",
+			wantErrType: reflect.TypeOf(&GetError{}),
+		},
+		{
+			name:        "HTTP status error",
+			statusCode:  http.StatusNotFound,
+			wantErrType: reflect.TypeOf(&HTTPStatusError{}),
+		},
+		{
+			name:        "JSON Parse Error",
+			statusCode:  http.StatusOK,
+			body:        []byte("not-valid-json"),
+			wantErrType: reflect.TypeOf(&JSONParseError{}),
+		},
+		{
+			name:       "no error",
+			statusCode: http.StatusOK,
+			body:       []byte(sth),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s := fakeServer(test.statusCode, test.body)
+			lc := New(s.URL, &http.Client{})
+			if test.url != "" {
+				lc = New(test.url, &http.Client{})
+			}
+
+			var resp ct.GetSTHResponse
+			got, gotErr := lc.GetAndParse("", nil, &resp)
+			if gotErrType := reflect.TypeOf(gotErr); gotErrType != test.wantErrType {
+				t.Errorf("GetAndParse(_, _): error was of type %v, want %v", gotErrType, test.wantErrType)
+			}
+			if got == nil {
+				t.Fatal("GetAndParse(_, _) = nil, _, want an HTTPData containing at least the timing of the request")
+			}
+			if got.Timing == nil || got.Timing.Start.IsZero() || got.Timing.End.IsZero() {
+				t.Errorf("GetAndParse(_, _): HTTPData.Timing = %+v, want the Timing to be populated with the timing of the request", got.Timing)
+			}
+			if !bytes.Equal(got.Body, test.body) {
+				t.Errorf("GetAndParse(_, _): HTTPData.Body = %s, want %s", got.Body, test.body)
 			}
 		})
 	}

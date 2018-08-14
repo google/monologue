@@ -98,11 +98,21 @@ type Timing struct {
 //               closed.
 //   - Body: The body of the response received, read from the Body field in the
 //           http.Response returned by the inner call to lc.HttpClient.Get().
+// This HTTPData struct will always be returned containing at least the timing
+// of the inner call to lc.HttpClient.Get() (even in the case where an error is
+// returned too).
+//
 // The error returned could be any of:
 //   - GetError
+//      -  HTTPData will contain only the timing of the request.
 //   - NilResponseError
+//      - HTTPData will contain only the timing of the request.
 //   - BodyReadError
+//      - HTTPData will contain the timing of the request and the received
+//        response.
 //   - HTTPStatusError
+//      - HTTPData will contain the timing of the request, the received
+//        response, and the body of the response.
 func (lc *LogClient) Get(path string, params map[string]string) (*HTTPData, error) {
 	httpData := &HTTPData{Timing: &Timing{}}
 
