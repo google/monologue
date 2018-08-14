@@ -96,7 +96,7 @@ func fakeServer(statusCode int, body []byte) *httptest.Server {
 
 var sth = "{\"tree_size\":344104340,\"timestamp\":1534165797863,\"sha256_root_hash\":\"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=\",\"tree_head_signature\":\"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8=\"}"
 
-// TODO(katjoyce): Improve this test - try to find a way to test for all error
+// TODO(katjoyce): Improve these tests - try to find a way to test for all error
 // types that could be returned by Get.
 func TestGet(t *testing.T) {
 	tests := []struct {
