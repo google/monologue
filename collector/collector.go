@@ -1,9 +1,9 @@
-// Monitor runs a tool to monitor a single Certificate Transparency Log, to
-// check that it is adhering to RFC 6962.
+// Collector runs a tool to collect the data needed to monitor a single
+// Certificate Transparency Log, that can then be used to check that it is
+// adhering to RFC 6962.
 //
-// TODO(katjoyce): Once it contains more functionality, turn this into a monitor
-// or data collector package so that it can be run on multiple Logs by spinning
-// up one per Log.
+// TODO(katjoyce): Once it contains more functionality, turn this into a package
+// so that it can be run on multiple Logs by spinning up one per Log.
 package main
 
 import (
