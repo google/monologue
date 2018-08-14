@@ -2,12 +2,14 @@ package client
 
 import (
 	"bytes"
+	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
 
 	ct "github.com/google/certificate-transparency-go"
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestBuildURL(t *testing.T) {
@@ -198,6 +200,97 @@ func TestGetAndParse(t *testing.T) {
 			}
 			if !bytes.Equal(got.Body, test.body) {
 				t.Errorf("GetAndParse(_, _): HTTPData.Body = %s, want %s", got.Body, test.body)
+			}
+		})
+	}
+}
+
+func mustB64Decode(s string) []byte {
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func TestGetSTH(t *testing.T) {
+	sthShortRootHash := "{\"tree_size\":344104340,\"timestamp\":1534165797863,\"sha256_root_hash\":\"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJx\",\"tree_head_signature\":\"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8=\"}"
+
+	tests := []struct {
+		name        string
+		url         string
+		statusCode  int
+		body        []byte
+		wantErrType reflect.Type
+		wantSTH     *ct.GetSTHResponse
+	}{
+		{
+			name:        "get error",
+			url:         "not-a-real-url",
+			wantErrType: reflect.TypeOf(&GetError{}),
+		},
+		{
+			name:        "HTTP status error",
+			statusCode:  http.StatusNotFound,
+			wantErrType: reflect.TypeOf(&HTTPStatusError{}),
+		},
+		{
+			name:        "JSON Parse Error",
+			statusCode:  http.StatusOK,
+			body:        []byte("not-valid-json"),
+			wantErrType: reflect.TypeOf(&JSONParseError{}),
+		},
+		{
+			name:        "Response To Struct Error",
+			statusCode:  http.StatusOK,
+			body:        []byte(sthShortRootHash),
+			wantErrType: reflect.TypeOf(&ResponseToStructError{}),
+		},
+		{
+			name:       "no error",
+			statusCode: http.StatusOK,
+			body:       []byte(sth),
+			wantSTH: &ct.GetSTHResponse{
+				TreeSize:          344104340,
+				Timestamp:         1534165797863,
+				SHA256RootHash:    mustB64Decode("ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU="),
+				TreeHeadSignature: mustB64Decode("BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="),
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s := fakeServer(test.statusCode, test.body)
+			lc := New(s.URL, &http.Client{})
+			if test.url != "" {
+				lc = New(test.url, &http.Client{})
+			}
+
+			gotSTH, gotHTTPData, gotErr := lc.GetSTH()
+			if gotErrType := reflect.TypeOf(gotErr); gotErrType != test.wantErrType {
+				t.Errorf("GetSTH(): error was of type %v, want %v", gotErrType, test.wantErrType)
+			}
+			if gotHTTPData == nil {
+				t.Fatal("GetSTH() = nil, _, want an HTTPData containing at least the timing of the request")
+			}
+			if gotHTTPData.Timing == nil || gotHTTPData.Timing.Start.IsZero() || gotHTTPData.Timing.End.IsZero() {
+				t.Errorf("GetSTH(): HTTPData.Timing = %+v, want the Timing to be populated with the timing of the request", gotHTTPData.Timing)
+			}
+			if !bytes.Equal(gotHTTPData.Body, test.body) {
+				t.Errorf("GetSTH(): HTTPData.Body = %s, want %s", gotHTTPData.Body, test.body)
+			}
+
+			if gotErr != nil {
+				return
+			}
+
+			want, err := test.wantSTH.ToSignedTreeHead()
+			if err != nil {
+				t.Fatalf("ct.GetSTHResponse.ToSignedTreeHead(): %s", err)
+			}
+			if diff := cmp.Diff(gotSTH, want); diff != "" {
+				t.Errorf("GetSTH(): ct.SignedTreeHead diff: (-got +want)\n%s", diff)
 			}
 		})
 	}
