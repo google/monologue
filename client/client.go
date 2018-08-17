@@ -75,7 +75,7 @@ func BuildURL(baseURL, path string, params map[string]string) string {
 
 // HTTPData contains information about an HTTP request that was made.
 type HTTPData struct {
-	Timing   *Timing
+	Timing   Timing
 	Response *http.Response
 	Body     []byte
 }
@@ -87,7 +87,7 @@ type Timing struct {
 	End   time.Time
 }
 
-// Get makes an HTTP GET call to path on the server at lc.url, using the
+// get makes an HTTP GET call to path on the server at lc.url, using the
 // paramters provided
 // Returned is an HTTPData struct containing:
 //   - Timing: This is the timing of the inner call to lc.HttpClient.Get(). It
@@ -113,7 +113,7 @@ type Timing struct {
 //   - HTTPStatusError
 //      - HTTPData will contain the timing of the request, the received
 //        response, and the body of the response.
-func (lc *LogClient) Get(path string, params map[string]string) (*HTTPData, error) {
+func (lc *LogClient) get(path string, params map[string]string) (*HTTPData, error) {
 	httpData := &HTTPData{Timing: &Timing{}}
 
 	fullURL := BuildURL(lc.url, path, params)
@@ -143,13 +143,13 @@ func (lc *LogClient) Get(path string, params map[string]string) (*HTTPData, erro
 	return httpData, nil
 }
 
-// GetAndParse calls Get() (see above) and then attempts to parse the JSON
+// getAndParse calls Get() (see above) and then attempts to parse the JSON
 // response body into rsp.
 // Returned is:
 //   - HTTPData: the struct returned from Get().
 //   - error: could be any of the error types returned by Get(), or a
 //            JSONParseError.
-func (lc *LogClient) GetAndParse(path string, params map[string]string, rsp interface{}) (*HTTPData, error) {
+func (lc *LogClient) getAndParse(path string, params map[string]string, rsp interface{}) (*HTTPData, error) {
 	httpData, err := lc.Get(path, params)
 	if err != nil {
 		return httpData, err

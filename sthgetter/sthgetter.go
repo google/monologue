@@ -5,6 +5,7 @@ package sthgetter
 import (
 	"context"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/google/certificate-transparency-monitor/client"
@@ -12,33 +13,31 @@ import (
 
 var logStr = "STH Getter"
 
-type STHGetter struct {
-	url       string
-	logClient *client.LogClient
-}
-
+// Run runs an STH Getter, which periodically gets an STH from a Log, checks
+// that each one meets per-STH requirements defined in RFC 6962, and stores
+// them.
 func Run(ctx context.Context, lc *client.LogClient, url string, period time.Duration) {
+	url = strings.TrimRight(url, "/")
 	log.Printf("%s: %s: Started with period %v", url, logStr, period)
-	sg := &STHGetter{url: url, logClient: lc}
 
 	t := time.NewTicker(period)
 	for {
 		select {
 		case <-t.C:
-			sg.GetCheckStoreSTH()
+			getCheckStoreSTH(url, lc)
 		}
 	}
 }
 
-func (sg *STHGetter) GetCheckStoreSTH() {
+func getCheckStoreSTH(url string, lc *client.LogClient) {
 	// Get STH from Log.
-	log.Printf("%s: %s: getting STH...", sg.url, logStr)
-	_, httpData, getErr := sg.logClient.GetSTH()
+	log.Printf("%s: %s: getting STH...", url, logStr)
+	_, httpData, getErr := lc.GetSTH()
 	if getErr != nil {
-		log.Printf("%s: %s: error getting STH: %s", sg.url, logStr, getErr)
+		log.Printf("%s: %s: error getting STH: %s", url, logStr, getErr)
 	}
 	if len(httpData.Body) > 0 {
-		log.Printf("%s: %s: response: %s", sg.url, logStr, httpData.Body)
+		log.Printf("%s: %s: response: %s", url, logStr, httpData.Body)
 	}
 
 	//TODO(katjoyce): Store get-sth API call.
