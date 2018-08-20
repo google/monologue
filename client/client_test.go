@@ -131,14 +131,14 @@ func TestGet(t *testing.T) {
 				lc = New(test.url, &http.Client{})
 			}
 
-			got, gotErr := lc.Get("", nil)
+			got, gotErr := lc.get("", nil)
 			if gotErrType := reflect.TypeOf(gotErr); gotErrType != test.wantErrType {
 				t.Errorf("Get(_, _): error was of type %v, want %v", gotErrType, test.wantErrType)
 			}
 			if got == nil {
 				t.Fatal("Get(_, _) = nil, _, want an HTTPData containing at least the timing of the request")
 			}
-			if got.Timing == nil || got.Timing.Start.IsZero() || got.Timing.End.IsZero() {
+			if got.Timing.Start.IsZero() || got.Timing.End.IsZero() {
 				t.Errorf("Get(_, _): HTTPData.Timing = %+v, want the Timing to be populated with the timing of the request", got.Timing)
 			}
 			if !bytes.Equal(got.Body, test.body) {
@@ -188,14 +188,14 @@ func TestGetAndParse(t *testing.T) {
 			}
 
 			var resp ct.GetSTHResponse
-			got, gotErr := lc.GetAndParse("", nil, &resp)
+			got, gotErr := lc.getAndParse("", nil, &resp)
 			if gotErrType := reflect.TypeOf(gotErr); gotErrType != test.wantErrType {
 				t.Errorf("GetAndParse(_, _): error was of type %v, want %v", gotErrType, test.wantErrType)
 			}
 			if got == nil {
 				t.Fatal("GetAndParse(_, _) = nil, _, want an HTTPData containing at least the timing of the request")
 			}
-			if got.Timing == nil || got.Timing.Start.IsZero() || got.Timing.End.IsZero() {
+			if got.Timing.Start.IsZero() || got.Timing.End.IsZero() {
 				t.Errorf("GetAndParse(_, _): HTTPData.Timing = %+v, want the Timing to be populated with the timing of the request", got.Timing)
 			}
 			if !bytes.Equal(got.Body, test.body) {
@@ -274,7 +274,7 @@ func TestGetSTH(t *testing.T) {
 			if gotHTTPData == nil {
 				t.Fatal("GetSTH() = nil, _, want an HTTPData containing at least the timing of the request")
 			}
-			if gotHTTPData.Timing == nil || gotHTTPData.Timing.Start.IsZero() || gotHTTPData.Timing.End.IsZero() {
+			if gotHTTPData.Timing.Start.IsZero() || gotHTTPData.Timing.End.IsZero() {
 				t.Errorf("GetSTH(): HTTPData.Timing = %+v, want the Timing to be populated with the timing of the request", gotHTTPData.Timing)
 			}
 			if !bytes.Equal(gotHTTPData.Body, test.body) {

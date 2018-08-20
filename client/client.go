@@ -114,7 +114,7 @@ type Timing struct {
 //      - HTTPData will contain the timing of the request, the received
 //        response, and the body of the response.
 func (lc *LogClient) get(path string, params map[string]string) (*HTTPData, error) {
-	httpData := &HTTPData{Timing: &Timing{}}
+	httpData := &HTTPData{Timing: Timing{}}
 
 	fullURL := BuildURL(lc.url, path, params)
 	httpData.Timing.Start = time.Now().UTC()
@@ -150,7 +150,7 @@ func (lc *LogClient) get(path string, params map[string]string) (*HTTPData, erro
 //   - error: could be any of the error types returned by Get(), or a
 //            JSONParseError.
 func (lc *LogClient) getAndParse(path string, params map[string]string, rsp interface{}) (*HTTPData, error) {
-	httpData, err := lc.Get(path, params)
+	httpData, err := lc.get(path, params)
 	if err != nil {
 		return httpData, err
 	}
@@ -168,7 +168,7 @@ func (lc *LogClient) getAndParse(path string, params map[string]string, rsp inte
 //     GetAndParse(), or a ResponseToStructError.
 func (lc *LogClient) GetSTH() (*ct.SignedTreeHead, *HTTPData, error) {
 	var resp ct.GetSTHResponse
-	httpData, err := lc.GetAndParse(ct.GetSTHPath, nil, &resp)
+	httpData, err := lc.getAndParse(ct.GetSTHPath, nil, &resp)
 	if err != nil {
 		return nil, httpData, err
 	}
