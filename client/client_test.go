@@ -80,8 +80,8 @@ func TestBuildURL(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if got := BuildURL(test.baseURL, test.path, test.params); got != test.want {
-				t.Fatalf("BuildURL(%q, %q, %v) = %q, want %q", test.baseURL, test.path, test.params, got, test.want)
+			if got := buildURL(test.baseURL, test.path, test.params); got != test.want {
+				t.Fatalf("buildURL(%q, %q, %v) = %q, want %q", test.baseURL, test.path, test.params, got, test.want)
 			}
 		})
 	}

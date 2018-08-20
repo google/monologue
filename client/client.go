@@ -28,7 +28,7 @@ func New(logURL string, hc *http.Client) *LogClient {
 	return &LogClient{url: strings.TrimRight(logURL, "/"), HttpClient: hc}
 }
 
-// BuildURL builds a URL made up of a base URL, a path and a map of parameters.
+// buildURL builds a URL made up of a base URL, a path and a map of parameters.
 //
 // Example:
 //   - Base URL: https://ct.googleapis.com/pilot/
@@ -36,7 +36,7 @@ func New(logURL string, hc *http.Client) *LogClient {
 //   - Params: map[string]string{"first":"15", "second":"20"}
 //  Result: https://ct.googleapis.com/pilot/ct/v1/get-sth-consistency?first=15&second=20
 //
-// When concatenating baseURL, path and params, BuildURL ensures that only one
+// When concatenating baseURL, path and params, buildURL ensures that only one
 // "/" appears between the baseURL and the path, and that no "/" appears between
 // the result of concatenating the baseURL and path, and the params.
 //
@@ -47,7 +47,7 @@ func New(logURL string, hc *http.Client) *LogClient {
 //  Result: https://ct.googleapis.com/pilot/ct/v1/get-sth-consistency?first=15&second=20
 //
 // See the tests for further examples.
-func BuildURL(baseURL, path string, params map[string]string) string {
+func buildURL(baseURL, path string, params map[string]string) string {
 	var withoutParams string
 	if len(baseURL) > 0 && len(path) > 0 {
 		// If we need to concatenate a non-empty baseURL and a non-empty path,
@@ -116,7 +116,7 @@ type Timing struct {
 func (lc *LogClient) get(path string, params map[string]string) (*HTTPData, error) {
 	httpData := &HTTPData{Timing: Timing{}}
 
-	fullURL := BuildURL(lc.url, path, params)
+	fullURL := buildURL(lc.url, path, params)
 	httpData.Timing.Start = time.Now().UTC()
 	resp, err := lc.HttpClient.Get(fullURL)
 	httpData.Timing.End = time.Now().UTC()
