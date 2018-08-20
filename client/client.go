@@ -20,12 +20,12 @@ import (
 // LogClient is a client for a sepcific CT Log.
 type LogClient struct {
 	url        string
-	HttpClient *http.Client
+	httpClient *http.Client
 }
 
 // New creates a new LogClient for monitoring the CT Log served at logURL.
 func New(logURL string, hc *http.Client) *LogClient {
-	return &LogClient{url: strings.TrimRight(logURL, "/"), HttpClient: hc}
+	return &LogClient{url: strings.TrimRight(logURL, "/"), httpClient: hc}
 }
 
 // buildURL builds a URL made up of a base URL, a path and a map of parameters.
@@ -90,16 +90,16 @@ type Timing struct {
 // get makes an HTTP GET call to path on the server at lc.url, using the
 // paramters provided
 // Returned is an HTTPData struct containing:
-//   - Timing: This is the timing of the inner call to lc.HttpClient.Get(). It
+//   - Timing: This is the timing of the inner call to lc.httpClient.Get(). It
 //             is intended to be an estimation of the time the request to the
 //             server took.
 //   - Response: The http.Response returned from the inner call to
-//               lc.HttpClient.Get(), with http.Response.Body already read and
+//               lc.httpClient.Get(), with http.Response.Body already read and
 //               closed.
 //   - Body: The body of the response received, read from the Body field in the
-//           http.Response returned by the inner call to lc.HttpClient.Get().
+//           http.Response returned by the inner call to lc.httpClient.Get().
 // This HTTPData struct will always be returned containing at least the timing
-// of the inner call to lc.HttpClient.Get() (even in the case where an error is
+// of the inner call to lc.httpClient.Get() (even in the case where an error is
 // returned too).
 //
 // The error returned could be any of:
@@ -118,7 +118,7 @@ func (lc *LogClient) get(path string, params map[string]string) (*HTTPData, erro
 
 	fullURL := buildURL(lc.url, path, params)
 	httpData.Timing.Start = time.Now().UTC()
-	resp, err := lc.HttpClient.Get(fullURL)
+	resp, err := lc.httpClient.Get(fullURL)
 	httpData.Timing.End = time.Now().UTC()
 	if err != nil {
 		return httpData, &GetError{URL: fullURL, Err: err}
