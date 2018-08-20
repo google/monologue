@@ -25,7 +25,7 @@ type LogClient struct {
 
 // New creates a new LogClient for monitoring the CT Log served at logURL.
 func New(logURL string, hc *http.Client) *LogClient {
-	return &LogClient{url: strings.TrimRight(logURL, "/"), httpClient: hc}
+	return &LogClient{url: logURL, httpClient: hc}
 }
 
 // buildURL builds a URL made up of a base URL, a path and a map of parameters.

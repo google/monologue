@@ -5,7 +5,6 @@ package sthgetter
 import (
 	"context"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/google/certificate-transparency-monitor/client"
@@ -17,7 +16,6 @@ var logStr = "STH Getter"
 // that each one meets per-STH requirements defined in RFC 6962, and stores
 // them.
 func Run(ctx context.Context, lc *client.LogClient, url string, period time.Duration) {
-	url = strings.TrimRight(url, "/")
 	log.Printf("%s: %s: Started with period %v", url, logStr, period)
 
 	t := time.NewTicker(period)
