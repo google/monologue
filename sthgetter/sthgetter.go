@@ -7,7 +7,10 @@ import (
 	"log"
 	"time"
 
+	ct "github.com/google/certificate-transparency-go"
+	monitor "github.com/google/certificate-transparency-monitor"
 	"github.com/google/certificate-transparency-monitor/client"
+	"github.com/google/certificate-transparency-monitor/storage"
 )
 
 var logStr = "STH Getter"
@@ -15,19 +18,19 @@ var logStr = "STH Getter"
 // Run runs an STH Getter, which periodically gets an STH from a Log, checks
 // that each one meets per-STH requirements defined in RFC 6962, and stores
 // them.
-func Run(ctx context.Context, lc *client.LogClient, url string, period time.Duration) {
+func Run(ctx context.Context, lc *client.LogClient, st storage.APICallWriter, url string, period time.Duration) {
 	log.Printf("%s: %s: Started with period %v", url, logStr, period)
 
 	t := time.NewTicker(period)
 	for {
 		select {
 		case <-t.C:
-			getCheckStoreSTH(url, lc)
+			getCheckStoreSTH(ctx, url, lc, st)
 		}
 	}
 }
 
-func getCheckStoreSTH(url string, lc *client.LogClient) {
+func getCheckStoreSTH(ctx context.Context, url string, lc *client.LogClient, st storage.APICallWriter) {
 	// Get STH from Log.
 	log.Printf("%s: %s: getting STH...", url, logStr)
 	_, httpData, getErr := lc.GetSTH()
@@ -38,7 +41,12 @@ func getCheckStoreSTH(url string, lc *client.LogClient) {
 		log.Printf("%s: %s: response: %s", url, logStr, httpData.Body)
 	}
 
-	//TODO(katjoyce): Store get-sth API call.
+	// Store get-sth API call.
+	apiCall := monitor.CreateAPICall(ct.GetSTHStr, httpData, getErr)
+	log.Println("Writing API Call...")
+	if err := st.WriteAPICall(ctx, apiCall); err != nil {
+		log.Printf("Error writing API Call %s: %s", apiCall, err)
+	}
 
 	//TODO(katjoyce): Run checks on the received STH.
 
