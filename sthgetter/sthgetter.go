@@ -43,9 +43,9 @@ func getCheckStoreSTH(ctx context.Context, url string, lc *client.LogClient, st 
 
 	// Store get-sth API call.
 	apiCall := monitor.CreateAPICall(ct.GetSTHStr, httpData, getErr)
-	log.Println("Writing API Call...")
+	log.Printf("%s: %s: writing API Call...", url, logStr)
 	if err := st.WriteAPICall(ctx, apiCall); err != nil {
-		log.Printf("Error writing API Call %s: %s", apiCall, err)
+		log.Printf("%s: %s: error writing API Call %s: %s", url, logStr, apiCall, err)
 	}
 
 	//TODO(katjoyce): Run checks on the received STH.
