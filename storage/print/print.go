@@ -10,7 +10,7 @@ import (
 	"context"
 	"log"
 
-	monitor "github.com/google/certificate-transparency-monitor"
+	"github.com/google/certificate-transparency-monitor/monitor"
 )
 
 // Storage implements the storage interfaces needed by the CT monitor.

@@ -5,7 +5,7 @@ package storage
 import (
 	"context"
 
-	monitor "github.com/google/certificate-transparency-monitor"
+	"github.com/google/certificate-transparency-monitor/monitor"
 )
 
 // APICallWriter is an interface for storing individual calls to CT API

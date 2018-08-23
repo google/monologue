@@ -8,8 +8,8 @@ import (
 	"time"
 
 	ct "github.com/google/certificate-transparency-go"
-	monitor "github.com/google/certificate-transparency-monitor"
 	"github.com/google/certificate-transparency-monitor/client"
+	"github.com/google/certificate-transparency-monitor/monitor"
 	"github.com/google/certificate-transparency-monitor/storage"
 )
 
