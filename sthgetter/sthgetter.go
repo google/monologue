@@ -19,14 +19,20 @@ var logStr = "STH Getter"
 // that each one meets per-STH requirements defined in RFC 6962, and stores
 // them.
 func Run(ctx context.Context, lc *client.LogClient, st storage.APICallWriter, url string, period time.Duration) {
-	log.Printf("%s: %s: Started with period %v", url, logStr, period)
+	log.Printf("%s: %s: started with period %v", url, logStr, period)
 
 	t := time.NewTicker(period)
+	defer t.Stop()
 	for {
 		select {
 		case <-t.C:
+			// TODO(katjoyce): Work out when and where to add context timeouts.
 			getCheckStoreSTH(ctx, url, lc, st)
+		case <-ctx.Done():
+			log.Printf("%s: %s: stopped", url, logStr)
+			return
 		}
+
 	}
 }
 
