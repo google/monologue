@@ -15,6 +15,7 @@ import (
 
 	"github.com/google/certificate-transparency-monitor/client"
 	"github.com/google/certificate-transparency-monitor/sthgetter"
+	"github.com/google/certificate-transparency-monitor/storage/print"
 )
 
 var (
@@ -31,5 +32,5 @@ func main() {
 	ctx := context.Background()
 
 	lc := client.New(*logURL, &http.Client{})
-	sthgetter.Run(ctx, lc, *logURL, *sthGetPeriod)
+	sthgetter.Run(ctx, lc, &print.Storage{}, *logURL, *sthGetPeriod)
 }
