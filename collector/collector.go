@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/monologue/client"
 	"github.com/google/monologue/ctlog"
 	"github.com/google/monologue/rootsgetter"
@@ -56,12 +57,17 @@ func main() {
 	}
 
 	ctx := context.Background()
-	l, err := ctlog.New(*logURL, *logName, *b64PubKey)
+	l, err := ctlog.New(*logURL, *logName, *b64PubKey, 24*time.Hour)
 	if err != nil {
 		glog.Exitf("Unable to obtain Log metadata: %s", err)
 	}
 
 	lc := client.New(l.URL, &http.Client{})
+
+	sv, err := ct.NewSignatureVerifier(l.PublicKey)
+	if err != nil {
+		glog.Exitf("Couldn't create signature verifier: %s", err)
+	}
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -70,7 +76,7 @@ func main() {
 		wg.Done()
 	}()
 	go func() {
-		sthgetter.Run(ctx, lc, &print.Storage{}, l, *sthGetPeriod)
+		sthgetter.Run(ctx, lc, sv, &print.Storage{}, l, *sthGetPeriod)
 		wg.Done()
 	}()
 	wg.Wait()
