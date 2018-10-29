@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/google/certificate-transparency-monitor/client"
+	"github.com/google/certificate-transparency-monitor/ctlog"
 	"github.com/google/certificate-transparency-monitor/sthgetter"
 	"github.com/google/certificate-transparency-monitor/storage/print"
 )
@@ -35,6 +36,8 @@ import (
 var (
 	sthGetPeriod = flag.Duration("sth_get_period", 1*time.Minute, "How regularly the monitor should get an STH from the Log")
 	logURL       = flag.String("log_url", "", "The URL of the Log to monitor, e.g. https://ct.googleapis.com/pilot/")
+	logName      = flag.String("log_name", "", "A short, snappy, canonical name for the Log to monitor, e.g. google_pilot")
+	b64PubKey    = flag.String("public_key", "", "The base64-encoded public key of the Log to monitor")
 )
 
 func main() {
@@ -42,9 +45,19 @@ func main() {
 	if *logURL == "" {
 		log.Fatalf("No Log URL provided.")
 	}
+	if *logName == "" {
+		log.Fatalf("No Log name provided.")
+	}
+	if *b64PubKey == "" {
+		log.Fatalf("No public key provided.")
+	}
 
 	ctx := context.Background()
+	l, err := ctlog.New(*logURL, *logName, *b64PubKey)
+	if err != nil {
+		log.Fatalf("Unable to obtain Log metadata: %s", err)
+	}
 
-	lc := client.New(*logURL, &http.Client{})
-	sthgetter.Run(ctx, lc, &print.Storage{}, *logURL, *sthGetPeriod)
+	lc := client.New(l.URL, &http.Client{})
+	sthgetter.Run(ctx, lc, &print.Storage{}, l, *sthGetPeriod)
 }
