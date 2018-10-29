@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package monitor provides core and utility types and functions that are useful
-// to more than one of the modules that make up the CT monitor.
-package monitor
+// Package apicall provides types and functions directly relating to the api
+// calls made by the monitor to a Log.
+package apicall
 
 import (
 	"fmt"
@@ -51,10 +51,10 @@ func (ac APICall) String() string {
 	return strings.Join(lines, "\n")
 }
 
-// CreateAPICall populates and returns an APICall struct using the given
-// APIendpoint, HTTPData and error, all of which should relate to the same
-// single call to an CT API endpoint.
-func CreateAPICall(ep ct.APIEndpoint, httpData *client.HTTPData, err error) *APICall {
+// New populates and returns an APICall struct using the given APIendpoint,
+// HTTPData and error, all of which should relate to the same single call to a
+// CT API endpoint.
+func New(ep ct.APIEndpoint, httpData *client.HTTPData, err error) *APICall {
 	apiCall := &APICall{Endpoint: ep, Err: err}
 	if httpData != nil {
 		apiCall.Start = httpData.Timing.Start

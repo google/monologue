@@ -19,11 +19,11 @@ package storage
 import (
 	"context"
 
-	"github.com/google/certificate-transparency-monitor/monitor"
+	"github.com/google/certificate-transparency-monitor/apicall"
 )
 
 // APICallWriter is an interface for storing individual calls to CT API
 // endpoints.
 type APICallWriter interface {
-	WriteAPICall(ctx context.Context, apiCall *monitor.APICall) error
+	WriteAPICall(ctx context.Context, apiCall *apicall.APICall) error
 }
