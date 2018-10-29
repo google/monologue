@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package monitor
+package apicall
 
 import (
 	"net/http"
@@ -24,7 +24,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestCreateAPICall(t *testing.T) {
+func TestNew(t *testing.T) {
 	pilotGetSTH := "https://ct.googleapis.com/pilot/ct/v1/get-sth"
 
 	tests := []struct {
@@ -66,7 +66,7 @@ func TestCreateAPICall(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := CreateAPICall(test.endpoint, test.httpData, test.err)
+			got := New(test.endpoint, test.httpData, test.err)
 			if diff := cmp.Diff(got, test.want); diff != "" {
 				t.Errorf("CreateAPICall(): diff: (-got +want)\n%s", diff)
 			}

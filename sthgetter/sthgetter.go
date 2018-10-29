@@ -22,8 +22,8 @@ import (
 	"time"
 
 	ct "github.com/google/certificate-transparency-go"
+	"github.com/google/certificate-transparency-monitor/apicall"
 	"github.com/google/certificate-transparency-monitor/client"
-	"github.com/google/certificate-transparency-monitor/monitor"
 	"github.com/google/certificate-transparency-monitor/storage"
 )
 
@@ -62,7 +62,7 @@ func getCheckStoreSTH(ctx context.Context, url string, lc *client.LogClient, st 
 	}
 
 	// Store get-sth API call.
-	apiCall := monitor.CreateAPICall(ct.GetSTHStr, httpData, getErr)
+	apiCall := apicall.New(ct.GetSTHStr, httpData, getErr)
 	log.Printf("%s: %s: writing API Call...", url, logStr)
 	if err := st.WriteAPICall(ctx, apiCall); err != nil {
 		log.Printf("%s: %s: error writing API Call %s: %s", url, logStr, apiCall, err)
