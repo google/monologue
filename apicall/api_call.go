@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package apicall provides core and utility types and functions that are useful
-// to more than one of the modules that make up the CT monitor.
+// Package apicall provides types and functions directly relating to the api
+// calls made by the monitor to a Log.
 package apicall
 
 import (
