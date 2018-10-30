@@ -26,7 +26,7 @@ import (
 	"github.com/google/certificate-transparency-go/logid"
 )
 
-// Log represents a CT Log and contains the Log metadata needed by the monitor.
+// Log contains metadata about a CT Log that is needed by the monitor.
 type Log struct {
 	ID        logid.LogID
 	Name      string
