@@ -20,7 +20,6 @@ package ctlog
 
 import (
 	"crypto"
-	"fmt"
 
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/certificate-transparency-go/logid"
@@ -42,11 +41,11 @@ type Log struct {
 func New(url, name, b64PubKey string) (*Log, error) {
 	id, err := logid.FromPubKeyB64(b64PubKey)
 	if err != nil {
-		return nil, fmt.Errorf("logid.FromPubKeyB64(): %s", err)
+		return nil, err
 	}
 	pk, err := ct.PublicKeyFromB64(b64PubKey)
 	if err != nil {
-		return nil, fmt.Errorf("ct.PublicKeyFromB64(): %s", err)
+		return nil, err
 	}
 	return &Log{
 		ID:        id,
