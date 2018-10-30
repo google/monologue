@@ -25,13 +25,14 @@ import (
 	"log"
 
 	"github.com/google/certificate-transparency-monitor/apicall"
+	"github.com/google/certificate-transparency-monitor/ctlog"
 )
 
 // Storage implements the storage interfaces needed by the CT monitor.
 type Storage struct{}
 
 // WriteAPICall simply prints the API Call passed to it.
-func (s *Storage) WriteAPICall(ctx context.Context, apiCall *apicall.APICall) error {
-	log.Println(apiCall.String())
+func (s *Storage) WriteAPICall(ctx context.Context, l *ctlog.Log, apiCall *apicall.APICall) error {
+	log.Printf("%s: %s", l.Name, apiCall.String())
 	return nil
 }
