@@ -22,10 +22,10 @@ import (
 	"time"
 
 	ct "github.com/google/certificate-transparency-go"
-	"github.com/google/certificate-transparency-monitor/apicall"
-	"github.com/google/certificate-transparency-monitor/client"
-	"github.com/google/certificate-transparency-monitor/ctlog"
-	"github.com/google/certificate-transparency-monitor/storage"
+	"github.com/google/monologue/apicall"
+	"github.com/google/monologue/client"
+	"github.com/google/monologue/ctlog"
+	"github.com/google/monologue/storage"
 )
 
 var logStr = "STH Getter"

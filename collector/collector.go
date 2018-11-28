@@ -27,10 +27,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/certificate-transparency-monitor/client"
-	"github.com/google/certificate-transparency-monitor/ctlog"
-	"github.com/google/certificate-transparency-monitor/sthgetter"
-	"github.com/google/certificate-transparency-monitor/storage/print"
+	"github.com/google/monologue/client"
+	"github.com/google/monologue/ctlog"
+	"github.com/google/monologue/sthgetter"
+	"github.com/google/monologue/storage/print"
 )
 
 var (

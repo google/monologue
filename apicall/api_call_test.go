@@ -20,8 +20,8 @@ import (
 	"time"
 
 	ct "github.com/google/certificate-transparency-go"
-	"github.com/google/certificate-transparency-monitor/client"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/monologue/client"
 )
 
 func TestNew(t *testing.T) {
