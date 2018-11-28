@@ -24,8 +24,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/google/certificate-transparency-monitor/apicall"
-	"github.com/google/certificate-transparency-monitor/ctlog"
+	"github.com/google/monologue/apicall"
+	"github.com/google/monologue/ctlog"
 )
 
 // Storage implements the storage interfaces needed by the CT monitor.

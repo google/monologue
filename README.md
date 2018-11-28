@@ -1,6 +1,6 @@
 # Certificate Transparency Log Monitor
 
-[![Build Status](https://travis-ci.org/google/certificate-transparency-monitor.svg?branch=master)](https://travis-ci.org/google/certificate-transparency-monitor)
+[![Build Status](https://travis-ci.org/google/monologue.svg?branch=master)](https://travis-ci.org/google/monologue)
 
 This repository contains the source code for the monitor that checks that
 Certificate Transparency Logs are complying with [RFC 6962](https://tools.ietf.org/html/rfc6962)

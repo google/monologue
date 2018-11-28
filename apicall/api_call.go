@@ -23,7 +23,7 @@ import (
 	"time"
 
 	ct "github.com/google/certificate-transparency-go"
-	"github.com/google/certificate-transparency-monitor/client"
+	"github.com/google/monologue/client"
 )
 
 // APICall contains the details of a call to one of the API endpoints of a CT

@@ -19,8 +19,8 @@ package storage
 import (
 	"context"
 
-	"github.com/google/certificate-transparency-monitor/apicall"
-	"github.com/google/certificate-transparency-monitor/ctlog"
+	"github.com/google/monologue/apicall"
+	"github.com/google/monologue/ctlog"
 )
 
 // APICallWriter is an interface for storing individual calls to CT API
