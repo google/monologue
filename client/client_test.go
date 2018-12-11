@@ -228,6 +228,10 @@ func mustB64Decode(s string) []byte {
 }
 
 func TestGetSTH(t *testing.T) {
+	sthMissingTreeSize := "{\"timestamp\":1534165797863,\"sha256_root_hash\":\"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=\",\"tree_head_signature\":\"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8=\"}"
+	sthMissingTimestamp := "{\"tree_size\":344104340,\"sha256_root_hash\":\"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=\",\"tree_head_signature\":\"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8=\"}"
+	sthMissingRootHash := "{\"tree_size\":344104340,\"timestamp\":1534165797863,\"tree_head_signature\":\"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8=\"}"
+	sthMissingSignature := "{\"tree_size\":344104340,\"timestamp\":1534165797863,\"sha256_root_hash\":\"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=\"}"
 	sthShortRootHash := "{\"tree_size\":344104340,\"timestamp\":1534165797863,\"sha256_root_hash\":\"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJx\",\"tree_head_signature\":\"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8=\"}"
 
 	tests := []struct {
@@ -255,7 +259,31 @@ func TestGetSTH(t *testing.T) {
 			wantErrType: reflect.TypeOf(&JSONParseError{}),
 		},
 		{
-			name:        "Response To Struct Error",
+			name:        "STH missing tree size",
+			statusCode:  http.StatusOK,
+			body:        []byte(sthMissingTreeSize),
+			wantErrType: reflect.TypeOf(&ResponseToStructError{}),
+		},
+		{
+			name:        "STH missing timestamp",
+			statusCode:  http.StatusOK,
+			body:        []byte(sthMissingTimestamp),
+			wantErrType: reflect.TypeOf(&ResponseToStructError{}),
+		},
+		{
+			name:        "STH missing root hash",
+			statusCode:  http.StatusOK,
+			body:        []byte(sthMissingRootHash),
+			wantErrType: reflect.TypeOf(&ResponseToStructError{}),
+		},
+		{
+			name:        "STH missing signature",
+			statusCode:  http.StatusOK,
+			body:        []byte(sthMissingSignature),
+			wantErrType: reflect.TypeOf(&ResponseToStructError{}),
+		},
+		{
+			name:        "STH missing end of root hash",
 			statusCode:  http.StatusOK,
 			body:        []byte(sthShortRootHash),
 			wantErrType: reflect.TypeOf(&ResponseToStructError{}),
@@ -283,7 +311,7 @@ func TestGetSTH(t *testing.T) {
 
 			gotSTH, gotHTTPData, gotErr := lc.GetSTH()
 			if gotErrType := reflect.TypeOf(gotErr); gotErrType != test.wantErrType {
-				t.Errorf("GetSTH(): error was of type %v, want %v", gotErrType, test.wantErrType)
+				t.Fatalf("GetSTH(): error was of type %v, want %v", gotErrType, test.wantErrType)
 			}
 			if gotHTTPData == nil {
 				t.Fatal("GetSTH() = nil, _, want an HTTPData containing at least the timing of the request")
