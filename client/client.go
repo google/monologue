@@ -19,6 +19,8 @@
 package client
 
 import (
+	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -193,4 +195,50 @@ func (lc *LogClient) GetSTH() (*ct.SignedTreeHead, *HTTPData, error) {
 	}
 
 	return sth, httpData, nil
+}
+
+// GetRoots performs a get-roots request.
+// Returned is:
+//   - a list of certificates, if no error is returned.
+//   - the HTTPData struct returned by GetAndParse() (see above).
+//   - an error, which could be any of the error types returned by
+//     GetAndParse(), or a ResponseToStructError.
+func (lc *LogClient) GetRoots() ([]*x509.Certificate, *HTTPData, error) {
+	var resp ct.GetRootsResponse
+	httpData, err := lc.getAndParse(ct.GetRootsPath, nil, &resp)
+	if err != nil {
+		return nil, httpData, err
+	}
+
+	roots := make([]*x509.Certificate, len(resp.Certificates))
+
+	if resp.Certificates == nil {
+		return nil, httpData, &ResponseToStructError{
+			From: reflect.TypeOf(resp),
+			To:   reflect.TypeOf(roots),
+			Err:  fmt.Errorf("no %q field in %q response", "certificates", ct.GetRootsStr),
+		}
+	}
+
+	for i, certB64 := range resp.Certificates {
+		roots[i], err = parseCertificate(certB64)
+		if err != nil {
+			return nil, httpData, &ResponseToStructError{
+				From: reflect.TypeOf(resp),
+				To:   reflect.TypeOf(roots),
+				Err:  fmt.Errorf("certificates[%d] is invalid: %s", i, err),
+			}
+		}
+	}
+
+	return roots, httpData, nil
+}
+
+func parseCertificate(b64 string) (*x509.Certificate, error) {
+	certDER, err := base64.StdEncoding.DecodeString(b64)
+	if err != nil {
+		return nil, err
+	}
+
+	return x509.ParseCertificate(certDER)
 }
