@@ -108,7 +108,7 @@ func fakeServer(statusCode int, body []byte) *httptest.Server {
 	}))
 }
 
-var sth = "{\"tree_size\":344104340,\"timestamp\":1534165797863,\"sha256_root_hash\":\"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=\",\"tree_head_signature\":\"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8=\"}"
+var sth = `{"tree_size":344104340,"timestamp":1534165797863,"sha256_root_hash":"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=","tree_head_signature":"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="}`
 
 // TODO(katjoyce): Improve these tests - try to find a way to test for all error
 // types that could be returned by Get.
@@ -228,11 +228,11 @@ func mustB64Decode(s string) []byte {
 }
 
 func TestGetSTH(t *testing.T) {
-	sthMissingTreeSize := "{\"timestamp\":1534165797863,\"sha256_root_hash\":\"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=\",\"tree_head_signature\":\"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8=\"}"
-	sthMissingTimestamp := "{\"tree_size\":344104340,\"sha256_root_hash\":\"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=\",\"tree_head_signature\":\"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8=\"}"
-	sthMissingRootHash := "{\"tree_size\":344104340,\"timestamp\":1534165797863,\"tree_head_signature\":\"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8=\"}"
-	sthMissingSignature := "{\"tree_size\":344104340,\"timestamp\":1534165797863,\"sha256_root_hash\":\"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=\"}"
-	sthShortRootHash := "{\"tree_size\":344104340,\"timestamp\":1534165797863,\"sha256_root_hash\":\"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJx\",\"tree_head_signature\":\"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8=\"}"
+	sthMissingTreeSize := `{"timestamp":1534165797863,"sha256_root_hash":"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=","tree_head_signature":"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="}`
+	sthMissingTimestamp := `{"tree_size":344104340,"sha256_root_hash":"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=","tree_head_signature":"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="}`
+	sthMissingRootHash := `{"tree_size":344104340,"timestamp":1534165797863,"tree_head_signature":"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="}`
+	sthMissingSignature := `{"tree_size":344104340,"timestamp":1534165797863,"sha256_root_hash":"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU="}`
+	sthShortRootHash := `{"tree_size":344104340,"timestamp":1534165797863,"sha256_root_hash":"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJx","tree_head_signature":"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="}`
 
 	tests := []struct {
 		name        string
