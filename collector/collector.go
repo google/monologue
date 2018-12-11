@@ -25,19 +25,22 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/google/monologue/client"
 	"github.com/google/monologue/ctlog"
+	"github.com/google/monologue/rootsgetter"
 	"github.com/google/monologue/sthgetter"
 	"github.com/google/monologue/storage/print"
 )
 
 var (
-	sthGetPeriod = flag.Duration("sth_get_period", 1*time.Minute, "How regularly the monitor should get an STH from the Log")
-	logURL       = flag.String("log_url", "", "The URL of the Log to monitor, e.g. https://ct.googleapis.com/pilot/")
-	logName      = flag.String("log_name", "", "A short, snappy, canonical name for the Log to monitor, e.g. google_pilot")
-	b64PubKey    = flag.String("public_key", "", "The base64-encoded public key of the Log to monitor")
+	rootsGetPeriod = flag.Duration("roots_get_period", 5*time.Minute, "How regularly the monitor should get root certificates from the Log")
+	sthGetPeriod   = flag.Duration("sth_get_period", 1*time.Minute, "How regularly the monitor should get an STH from the Log")
+	logURL         = flag.String("log_url", "", "The URL of the Log to monitor, e.g. https://ct.googleapis.com/pilot/")
+	logName        = flag.String("log_name", "", "A short, snappy, canonical name for the Log to monitor, e.g. google_pilot")
+	b64PubKey      = flag.String("public_key", "", "The base64-encoded public key of the Log to monitor")
 )
 
 func main() {
@@ -59,5 +62,16 @@ func main() {
 	}
 
 	lc := client.New(l.URL, &http.Client{})
-	sthgetter.Run(ctx, lc, &print.Storage{}, l, *sthGetPeriod)
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		rootsgetter.Run(ctx, lc, &print.Storage{}, l, *rootsGetPeriod)
+		wg.Done()
+	}()
+	go func() {
+		sthgetter.Run(ctx, lc, &print.Storage{}, l, *sthGetPeriod)
+		wg.Done()
+	}()
+	wg.Wait()
 }
