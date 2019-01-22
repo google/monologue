@@ -47,7 +47,6 @@ func Run(ctx context.Context, lc *client.LogClient, st storage.APICallWriter, l 
 			log.Printf("%s: %s: stopped", l.URL, logStr)
 			return
 		}
-
 	}
 }
 
