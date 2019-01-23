@@ -33,7 +33,37 @@ import (
 	ct "github.com/google/certificate-transparency-go"
 )
 
-// LogClient is a client for a sepcific CT Log.
+// LogClient is a client for a specific CT Log.
+//
+// Most of the LogClient methods return HTTPData structs and errors.
+//
+// A returned HTTPData struct contains:
+//   - Timing: The time it took for the LogClient's HTTP client to send the
+//             request and receive a response.
+//   - Response: The http.Response returned by the LogClient's HTTP client, with
+//               http.Response.Body already read and closed.
+//   - Body: The body of the response received, read from the Body field in the
+//           http.Response returned by the LogClient's HTTP client.
+// This HTTPData struct will always be returned containing at least the timing
+// of the request, even in the case where an error is returned too.
+//
+// If an error is returned it could be any of the following types, in addition
+// to any error types specified in the documentation specific to that method.
+// The type of error that is returned influences what the HTTPData struct
+// returned will contain:
+//   - GetError
+//      - HTTPData will contain only the timing of the request.
+//   - NilResponseError
+//      - HTTPData will contain only the timing of the request.
+//   - BodyReadError
+//      - HTTPData will contain the timing of the request and the received
+//        response.
+//   - HTTPStatusError
+//      - HTTPData will contain the timing of the request, the received
+//        response, and the body of the response.
+//   - JSONParseError
+//      - HTTPData will contain the timing of the request, the received
+//        response, and the body of the response.
 type LogClient struct {
 	url        string
 	httpClient *http.Client
@@ -104,31 +134,7 @@ type Timing struct {
 }
 
 // get makes an HTTP GET call to path on the server at lc.url, using the
-// paramters provided
-// Returned is an HTTPData struct containing:
-//   - Timing: This is the timing of the inner call to lc.httpClient.Get(). It
-//             is intended to be an estimation of the time the request to the
-//             server took.
-//   - Response: The http.Response returned from the inner call to
-//               lc.httpClient.Get(), with http.Response.Body already read and
-//               closed.
-//   - Body: The body of the response received, read from the Body field in the
-//           http.Response returned by the inner call to lc.httpClient.Get().
-// This HTTPData struct will always be returned containing at least the timing
-// of the inner call to lc.httpClient.Get() (even in the case where an error is
-// returned too).
-//
-// The error returned could be any of:
-//   - GetError
-//      -  HTTPData will contain only the timing of the request.
-//   - NilResponseError
-//      - HTTPData will contain only the timing of the request.
-//   - BodyReadError
-//      - HTTPData will contain the timing of the request and the received
-//        response.
-//   - HTTPStatusError
-//      - HTTPData will contain the timing of the request, the received
-//        response, and the body of the response.
+// parameters provided.
 func (lc *LogClient) get(path string, params map[string]string) (*HTTPData, error) {
 	httpData := &HTTPData{Timing: Timing{}}
 
@@ -159,12 +165,8 @@ func (lc *LogClient) get(path string, params map[string]string) (*HTTPData, erro
 	return httpData, nil
 }
 
-// getAndParse calls Get() (see above) and then attempts to parse the JSON
+// getAndParse calls get() (see above) and then attempts to parse the JSON
 // response body into rsp.
-// Returned is:
-//   - HTTPData: the struct returned from Get().
-//   - error: could be any of the error types returned by Get(), or a
-//            JSONParseError.
 func (lc *LogClient) getAndParse(path string, params map[string]string, rsp interface{}) (*HTTPData, error) {
 	httpData, err := lc.get(path, params)
 	if err != nil {
@@ -179,9 +181,9 @@ func (lc *LogClient) getAndParse(path string, params map[string]string, rsp inte
 // GetSTH performs a get-sth request.
 // Returned is:
 //   - a populated ct.SignedTreeHead, if no error is returned.
-//   - the HTTPData struct returned by GetAndParse() (see above).
-//   - an error, which could be any of the error types returned by
-//     GetAndParse(), or a ResponseToStructError.
+//   - an HTTPData struct (see above).
+//   - an error, which could be any of the error types listed in the LogClient
+//     documentation (see above), or a ResponseToStructError.
 func (lc *LogClient) GetSTH() (*ct.SignedTreeHead, *HTTPData, error) {
 	var resp ct.GetSTHResponse
 	httpData, err := lc.getAndParse(ct.GetSTHPath, nil, &resp)
