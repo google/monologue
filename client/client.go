@@ -36,25 +36,21 @@ import (
 // Most of the LogClient methods return HTTPData structs and errors.
 //
 // A returned HTTPData struct contains:
-//   - Timing: The timing of the inner call to LogClient.httpClient.Get(). It is
-//             intended to be an estimation of the time the request to the
-//             server took.
-//   - Response: The http.Response returned from the inner call to
-//               LogClient.httpClient.Get(), with http.Response.Body already
-//               read and closed.
+//   - Timing: The time it took for the LogClient's HTTP client to send the
+//             request and receive a response.
+//   - Response: The http.Response returned by the LogClient's HTTP client, with
+//               http.Response.Body already read and closed.
 //   - Body: The body of the response received, read from the Body field in the
-//           http.Response returned by the inner call to
-//           LogClient.httpClient.Get().
+//           http.Response returned by the LogClient's HTTP client.
 // This HTTPData struct will always be returned containing at least the timing
-// of the inner call to LogClient.httpClient.Get() (even in the case where an
-// error is returned too).
+// of the request, even in the case where an error is returned too.
 //
 // If an error is returned it could be any of the following types, in addition
-// to any error types specified in the documetaiton specific to that method.
+// to any error types specified in the documentation specific to that method.
 // The type of error that is returned influences what the HTTPData struct
 // returned will contain:
 //   - GetError
-//      -  HTTPData will contain only the timing of the request.
+//      - HTTPData will contain only the timing of the request.
 //   - NilResponseError
 //      - HTTPData will contain only the timing of the request.
 //   - BodyReadError
@@ -66,9 +62,6 @@ import (
 //   - JSONParseError
 //      - HTTPData will contain the timing of the request, the received
 //        response, and the body of the response.
-//
-// TODO(katjoyce): Update the above documentation when POST methods and/or
-// different error types are added.
 type LogClient struct {
 	url        string
 	httpClient *http.Client
