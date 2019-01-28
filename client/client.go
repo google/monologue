@@ -109,7 +109,7 @@ func buildURL(baseURL, path string, params map[string]string) string {
 		return withoutParams
 	}
 
-	// If there are paramters to be added to the URL, remove any trailing /'s
+	// If there are parameters to be added to the URL, remove any trailing /'s
 	// before adding the parameters.
 	withoutParams = strings.TrimRight(withoutParams, "/")
 	vals := url.Values{}
