@@ -26,6 +26,9 @@ import (
 	"github.com/google/monologue/client"
 )
 
+// maxBodyStringLen is the length beyond which APICall.Body will be truncated when converted to a string by APICall.String().
+const maxBodyStringLen = 1000
+
 // APICall contains the details of a call to one of the API endpoints of a CT
 // Log.
 type APICall struct {
@@ -38,12 +41,18 @@ type APICall struct {
 }
 
 func (ac APICall) String() string {
+	var responseBody = string(ac.Body)
+
+	if len(ac.Body) > maxBodyStringLen {
+		responseBody = fmt.Sprintf("%s [truncated next %d bytes]", ac.Body[:maxBodyStringLen], len(ac.Body)-maxBodyStringLen)
+	}
+
 	lines := []string{
 		"APICall {",
 		fmt.Sprintf("\tStart: %s", ac.Start),
 		fmt.Sprintf("\tEnd: %s", ac.End),
 		fmt.Sprintf("\tEndpoint: %s", ac.Endpoint),
-		fmt.Sprintf("\tResponse body: %s", ac.Body),
+		fmt.Sprintf("\tResponse body: %s", responseBody),
 		fmt.Sprintf("\tResponse: %v", ac.Response),
 		fmt.Sprintf("\tErr: %v", ac.Err),
 		"}",
