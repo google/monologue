@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package sthgetter periodically gets an STH from a Log, checks that each one
-// meets per-STH requirements defined in RFC 6962, and stores them.
-package sthgetter
+// Package sth provides functions for fetching and validating STHs (Signed Tree Heads) from Certificate Transparency Logs (see RFC 6962).
+package sth
 
 import (
 	"context"
@@ -28,15 +27,13 @@ import (
 	"github.com/google/monologue/storage"
 )
 
-const logStr = "STH Getter"
-
-// GetSTH fetches the latest Signed Tree Head from a Log, using the given client.
+// Get fetches the latest Signed Tree Head from a Log, using the given client.
 // Records details of the get-sth API call to the provided storage.
-func GetSTH(ctx context.Context, l *ctlog.Log, lc *client.LogClient, store storage.APICallWriter) (*ct.SignedTreeHead, error) {
-	log.Printf("%s: %s: getting STH...", l.URL, logStr)
+func Get(ctx context.Context, l *ctlog.Log, lc *client.LogClient, store storage.APICallWriter) (*ct.SignedTreeHead, error) {
+	log.Printf("%s: getting STH...", l.URL)
 	sth, httpData, getErr := lc.GetSTH()
 
-	log.Printf("%s: %s: writing get-sth API Call...", l.URL, logStr)
+	log.Printf("%s: writing get-sth API Call...", l.URL)
 	apiCall := apicall.New(ct.GetSTHStr, httpData, getErr)
 	if err := store.WriteAPICall(ctx, l, apiCall); err != nil {
 		return nil, fmt.Errorf("error writing API Call %s: %s", apiCall, err)
@@ -47,7 +44,7 @@ func GetSTH(ctx context.Context, l *ctlog.Log, lc *client.LogClient, store stora
 	}
 
 	if len(httpData.Body) > 0 {
-		log.Printf("%s: %s: response: %s", l.URL, logStr, httpData.Body)
+		log.Printf("%s: get-sth response: %s", l.URL, httpData.Body)
 	}
 
 	return sth, nil

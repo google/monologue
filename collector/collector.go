@@ -32,7 +32,7 @@ import (
 	"github.com/google/monologue/ctlog"
 	"github.com/google/monologue/roots"
 	"github.com/google/monologue/schedule"
-	"github.com/google/monologue/sthgetter"
+	"github.com/google/monologue/sth"
 	"github.com/google/monologue/storage/print"
 )
 
@@ -86,7 +86,7 @@ func main() {
 		{
 			name: "STH Getter",
 			get: func(ctx context.Context, lc *client.LogClient, st *print.Storage, l *ctlog.Log) error {
-				if _, err := sthgetter.GetSTH(ctx, l, lc, st); err != nil {
+				if _, err := sth.Get(ctx, l, lc, st); err != nil {
 					return err
 				}
 				// TODO(katjoyce): Check and store STH
