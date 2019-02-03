@@ -18,6 +18,7 @@ package storage
 
 import (
 	"context"
+	"crypto/x509"
 	"time"
 
 	ct "github.com/google/certificate-transparency-go"
@@ -34,4 +35,9 @@ type APICallWriter interface {
 // STHWriter is an interface for storing STHs received from a CT Log.
 type STHWriter interface {
 	WriteSTH(ctx context.Context, l *ctlog.Log, sth *ct.SignedTreeHead, receivedAt time.Time, errs []error) error
+}
+
+// RootsWriter is an interface for storing root certificates retrieved from a CT get-roots call.
+type RootsWriter interface {
+	WriteRoots(ctx context.Context, l *ctlog.Log, roots []*x509.Certificate, receivedAt time.Time) error
 }

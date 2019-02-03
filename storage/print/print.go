@@ -22,6 +22,7 @@ package print
 
 import (
 	"context"
+	"crypto/x509"
 	"time"
 
 	"github.com/golang/glog"
@@ -42,5 +43,11 @@ func (s *Storage) WriteAPICall(ctx context.Context, l *ctlog.Log, apiCall *apica
 // WriteSTH simply prints the STH and errors passed to it.
 func (s *Storage) WriteSTH(ctx context.Context, l *ctlog.Log, sth *ct.SignedTreeHead, receivedAt time.Time, errs []error) error {
 	glog.Infof("%s:\n\tSTH: %s\n\tVerification errors: %s", l.Name, sth, errs)
+	return nil
+}
+
+// WriteRoots simply prints the number of certificates passed to it.
+func (s *Storage) WriteRoots(ctx context.Context, l *ctlog.Log, certs []*x509.Certificate, receivedAt time.Time) error {
+	glog.Infof("%s at %s: %d root certificates", l.Name, receivedAt, len(certs))
 	return nil
 }

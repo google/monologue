@@ -51,6 +51,7 @@ type Config struct {
 // modules that the collector runs (e.g. sthgetter, rootsgetter etc).
 type Storage interface {
 	storage.APICallWriter
+	storage.RootsWriter
 	storage.STHWriter
 }
 
