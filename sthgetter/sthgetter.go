@@ -18,8 +18,8 @@ package sthgetter
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"time"
 
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/monologue/apicall"
@@ -28,47 +28,33 @@ import (
 	"github.com/google/monologue/storage"
 )
 
-var logStr = "STH Getter"
+const logStr = "STH Getter"
 
-// Run runs an STH Getter, which periodically gets an STH from a Log, checks
-// that each one meets per-STH requirements defined in RFC 6962, and stores
-// them.
-func Run(ctx context.Context, lc *client.LogClient, st storage.APICallWriter, l *ctlog.Log, period time.Duration) {
-	log.Printf("%s: %s: started with period %v", l.URL, logStr, period)
-
-	t := time.NewTicker(period)
-	defer t.Stop()
-	for {
-		select {
-		case <-t.C:
-			// TODO(katjoyce): Work out when and where to add context timeouts.
-			getCheckStoreSTH(ctx, lc, st, l)
-		case <-ctx.Done():
-			log.Printf("%s: %s: stopped", l.URL, logStr)
-			return
-		}
-	}
-}
-
-func getCheckStoreSTH(ctx context.Context, lc *client.LogClient, st storage.APICallWriter, l *ctlog.Log) {
-	// Get STH from Log.
+// GetSTH fetches the latest Signed Tree Head from a Log, using the given client.
+// Records details of the get-sth API call to the provided storage.
+func GetSTH(ctx context.Context, l *ctlog.Log, lc *client.LogClient, store storage.APICallWriter) (*ct.SignedTreeHead, error) {
 	log.Printf("%s: %s: getting STH...", l.URL, logStr)
-	_, httpData, getErr := lc.GetSTH()
-	if getErr != nil {
-		log.Printf("%s: %s: error getting STH: %s", l.URL, logStr, getErr)
+	sth, httpData, getErr := lc.GetSTH()
+
+	log.Printf("%s: %s: writing get-sth API Call...", l.URL, logStr)
+	apiCall := apicall.New(ct.GetSTHStr, httpData, getErr)
+	if err := store.WriteAPICall(ctx, l, apiCall); err != nil {
+		return nil, fmt.Errorf("error writing API Call %s: %s", apiCall, err)
 	}
+
+	if getErr != nil {
+		return nil, fmt.Errorf("error getting STH: %s", getErr)
+	}
+
 	if len(httpData.Body) > 0 {
 		log.Printf("%s: %s: response: %s", l.URL, logStr, httpData.Body)
 	}
 
-	// Store get-sth API call.
-	apiCall := apicall.New(ct.GetSTHStr, httpData, getErr)
-	log.Printf("%s: %s: writing API Call...", l.URL, logStr)
-	if err := st.WriteAPICall(ctx, l, apiCall); err != nil {
-		log.Printf("%s: %s: error writing API Call %s: %s", l.URL, logStr, apiCall, err)
-	}
+	return sth, nil
+}
 
-	//TODO(katjoyce): Run checks on the received STH.
-
-	//TODO(katjoyce): Store STH.
+// CheckSTH checks that the Signed Tree Head from a Log is valid.
+// TODO(katjoyce): Implement CheckSTH.
+func CheckSTH(ctx context.Context, log *ctlog.Log, sth *ct.SignedTreeHead) error {
+	return fmt.Errorf("not implemented")
 }

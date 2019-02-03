@@ -31,6 +31,7 @@ import (
 	"github.com/google/monologue/client"
 	"github.com/google/monologue/ctlog"
 	"github.com/google/monologue/rootsgetter"
+	"github.com/google/monologue/schedule"
 	"github.com/google/monologue/sthgetter"
 	"github.com/google/monologue/storage/print"
 )
@@ -63,15 +64,51 @@ func main() {
 
 	lc := client.New(l.URL, &http.Client{})
 
+	type Getter struct {
+		name   string
+		get    func(context.Context, *client.LogClient, *print.Storage, *ctlog.Log) error
+		period time.Duration
+	}
+
+	getters := []Getter{
+		{
+			name: "Roots Getter",
+			get: func(ctx context.Context, lc *client.LogClient, st *print.Storage, l *ctlog.Log) error {
+				_, err := rootsgetter.GetRoots(ctx, l, lc, st)
+				if err != nil {
+					return err
+				}
+				// TODO(RJPercival): Store roots
+				return nil
+			},
+			period: *rootsGetPeriod,
+		},
+		{
+			name: "STH Getter",
+			get: func(ctx context.Context, lc *client.LogClient, st *print.Storage, l *ctlog.Log) error {
+				if _, err := sthgetter.GetSTH(ctx, l, lc, st); err != nil {
+					return err
+				}
+				// TODO(katjoyce): Check and store STH
+				return nil
+			},
+			period: *sthGetPeriod,
+		},
+	}
+
 	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() {
-		rootsgetter.Run(ctx, lc, &print.Storage{}, l, *rootsGetPeriod)
-		wg.Done()
-	}()
-	go func() {
-		sthgetter.Run(ctx, lc, &print.Storage{}, l, *sthGetPeriod)
-		wg.Done()
-	}()
+	wg.Add(len(getters))
+	for _, g := range getters {
+		go func(g Getter) {
+			log.Printf("%s: %s: started with period %v", l.URL, g.name, g.period)
+			schedule.Every(ctx, g.period, func(ctx context.Context) {
+				if err := g.get(ctx, lc, &print.Storage{}, l); err != nil {
+					log.Printf("%s: %s: %s", l.URL, g.name, err)
+				}
+			})
+			log.Printf("%s: %s: stopped", l.URL, g.name)
+			wg.Done()
+		}(g)
+	}
 	wg.Wait()
 }

@@ -17,8 +17,9 @@ package rootsgetter
 
 import (
 	"context"
+	"crypto/x509"
+	"fmt"
 	"log"
-	"time"
 
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/monologue/apicall"
@@ -29,39 +30,22 @@ import (
 
 const logStr = "Roots Getter"
 
-// Run starts an STH Getter, which periodically queries a Log for its set of acceptable root certificates and stores them.
-func Run(ctx context.Context, lc *client.LogClient, st storage.APICallWriter, l *ctlog.Log, period time.Duration) {
-	log.Printf("%s: %s: started with period %v", l.URL, logStr, period)
-
-	t := time.NewTicker(period)
-	defer t.Stop()
-	for {
-		select {
-		case <-t.C:
-			// TODO(katjoyce): Work out when and where to add context timeouts.
-			getAndStoreRoots(ctx, lc, st, l)
-		case <-ctx.Done():
-			log.Printf("%s: %s: stopped", l.URL, logStr)
-			return
-		}
-	}
-}
-
-func getAndStoreRoots(ctx context.Context, lc *client.LogClient, st storage.APICallWriter, l *ctlog.Log) {
+// GetRoots fetches the current root certificates trusted by a Log, using the given client.
+// Records details of the get-roots API call to the provided storage.
+func GetRoots(ctx context.Context, l *ctlog.Log, lc *client.LogClient, st storage.APICallWriter) ([]*x509.Certificate, error) {
 	log.Printf("%s: %s: getting roots...", l.URL, logStr)
 	roots, httpData, getErr := lc.GetRoots()
-	if getErr != nil {
-		log.Printf("%s: %s: error getting roots: %s", l.URL, logStr, getErr)
-	} else {
-		log.Printf("%s: %s: response: %d certificates", l.URL, logStr, len(roots))
-	}
 
-	// Store get-roots API call.
+	log.Printf("%s: %s: writing get-roots API Call...", l.URL, logStr)
 	apiCall := apicall.New(ct.GetRootsStr, httpData, getErr)
-	log.Printf("%s: %s: writing API Call...", l.URL, logStr)
 	if err := st.WriteAPICall(ctx, l, apiCall); err != nil {
-		log.Printf("%s: %s: error writing API Call %s: %s", l.URL, logStr, apiCall, err)
+		return nil, fmt.Errorf("error writing API Call %s: %s", apiCall, err)
 	}
 
-	//TODO(RJPercival): Store roots.
+	if getErr != nil {
+		return nil, fmt.Errorf("error getting roots: %s", getErr)
+	}
+
+	log.Printf("%s: %s: get-roots response: %d certificates", l.URL, logStr, len(roots))
+	return roots, nil
 }
