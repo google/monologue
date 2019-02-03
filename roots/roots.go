@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package rootsgetter periodically queries a Log for its set of acceptable root certificates and stores them.
-package rootsgetter
+// Package roots provides functions for fetching and handling root certificates from Certificate Transparency Logs.
+package roots
 
 import (
 	"context"
@@ -28,15 +28,13 @@ import (
 	"github.com/google/monologue/storage"
 )
 
-const logStr = "Roots Getter"
-
-// GetRoots fetches the current root certificates trusted by a Log, using the given client.
+// Get fetches the current root certificates trusted by a Log, using the given client.
 // Records details of the get-roots API call to the provided storage.
-func GetRoots(ctx context.Context, l *ctlog.Log, lc *client.LogClient, st storage.APICallWriter) ([]*x509.Certificate, error) {
-	log.Printf("%s: %s: getting roots...", l.URL, logStr)
+func Get(ctx context.Context, l *ctlog.Log, lc *client.LogClient, st storage.APICallWriter) ([]*x509.Certificate, error) {
+	log.Printf("%s: getting roots...", l.URL)
 	roots, httpData, getErr := lc.GetRoots()
 
-	log.Printf("%s: %s: writing get-roots API Call...", l.URL, logStr)
+	log.Printf("%s: writing get-roots API Call...", l.URL)
 	apiCall := apicall.New(ct.GetRootsStr, httpData, getErr)
 	if err := st.WriteAPICall(ctx, l, apiCall); err != nil {
 		return nil, fmt.Errorf("error writing API Call %s: %s", apiCall, err)
@@ -46,6 +44,6 @@ func GetRoots(ctx context.Context, l *ctlog.Log, lc *client.LogClient, st storag
 		return nil, fmt.Errorf("error getting roots: %s", getErr)
 	}
 
-	log.Printf("%s: %s: get-roots response: %d certificates", l.URL, logStr, len(roots))
+	log.Printf("%s: get-roots response: %d certificates", l.URL, len(roots))
 	return roots, nil
 }

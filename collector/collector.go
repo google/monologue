@@ -30,7 +30,7 @@ import (
 
 	"github.com/google/monologue/client"
 	"github.com/google/monologue/ctlog"
-	"github.com/google/monologue/rootsgetter"
+	"github.com/google/monologue/roots"
 	"github.com/google/monologue/schedule"
 	"github.com/google/monologue/sthgetter"
 	"github.com/google/monologue/storage/print"
@@ -74,7 +74,7 @@ func main() {
 		{
 			name: "Roots Getter",
 			get: func(ctx context.Context, lc *client.LogClient, st *print.Storage, l *ctlog.Log) error {
-				_, err := rootsgetter.GetRoots(ctx, l, lc, st)
+				_, err := roots.Get(ctx, l, lc, st)
 				if err != nil {
 					return err
 				}
