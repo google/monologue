@@ -18,9 +18,9 @@ package sthgetter
 
 import (
 	"context"
-	"log"
 	"time"
 
+	"github.com/golang/glog"
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/monologue/apicall"
 	"github.com/google/monologue/client"
@@ -34,7 +34,7 @@ var logStr = "STH Getter"
 // that each one meets per-STH requirements defined in RFC 6962, and stores
 // them.
 func Run(ctx context.Context, lc *client.LogClient, st storage.APICallWriter, l *ctlog.Log, period time.Duration) {
-	log.Printf("%s: %s: started with period %v", l.URL, logStr, period)
+	glog.Infof("%s: %s: started with period %v", l.URL, logStr, period)
 
 	t := time.NewTicker(period)
 	defer t.Stop()
@@ -44,7 +44,7 @@ func Run(ctx context.Context, lc *client.LogClient, st storage.APICallWriter, l 
 			// TODO(katjoyce): Work out when and where to add context timeouts.
 			getCheckStoreSTH(ctx, lc, st, l)
 		case <-ctx.Done():
-			log.Printf("%s: %s: stopped", l.URL, logStr)
+			glog.Infof("%s: %s: stopped", l.URL, logStr)
 			return
 		}
 	}
@@ -52,20 +52,20 @@ func Run(ctx context.Context, lc *client.LogClient, st storage.APICallWriter, l 
 
 func getCheckStoreSTH(ctx context.Context, lc *client.LogClient, st storage.APICallWriter, l *ctlog.Log) {
 	// Get STH from Log.
-	log.Printf("%s: %s: getting STH...", l.URL, logStr)
+	glog.Infof("%s: %s: getting STH...", l.URL, logStr)
 	_, httpData, getErr := lc.GetSTH()
 	if getErr != nil {
-		log.Printf("%s: %s: error getting STH: %s", l.URL, logStr, getErr)
+		glog.Infof("%s: %s: error getting STH: %s", l.URL, logStr, getErr)
 	}
 	if len(httpData.Body) > 0 {
-		log.Printf("%s: %s: response: %s", l.URL, logStr, httpData.Body)
+		glog.Infof("%s: %s: response: %s", l.URL, logStr, httpData.Body)
 	}
 
 	// Store get-sth API call.
 	apiCall := apicall.New(ct.GetSTHStr, httpData, getErr)
-	log.Printf("%s: %s: writing API Call...", l.URL, logStr)
+	glog.Infof("%s: %s: writing API Call...", l.URL, logStr)
 	if err := st.WriteAPICall(ctx, l, apiCall); err != nil {
-		log.Printf("%s: %s: error writing API Call %s: %s", l.URL, logStr, apiCall, err)
+		glog.Infof("%s: %s: error writing API Call %s: %s", l.URL, logStr, apiCall, err)
 	}
 
 	//TODO(katjoyce): Run checks on the received STH.

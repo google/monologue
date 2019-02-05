@@ -22,8 +22,8 @@ package print
 
 import (
 	"context"
-	"log"
 
+	"github.com/golang/glog"
 	"github.com/google/monologue/apicall"
 	"github.com/google/monologue/ctlog"
 )
@@ -33,6 +33,6 @@ type Storage struct{}
 
 // WriteAPICall simply prints the API Call passed to it.
 func (s *Storage) WriteAPICall(ctx context.Context, l *ctlog.Log, apiCall *apicall.APICall) error {
-	log.Printf("%s: %s", l.Name, apiCall.String())
+	glog.Infof("%s: %s", l.Name, apiCall.String())
 	return nil
 }

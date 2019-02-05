@@ -17,9 +17,9 @@ package rootsgetter
 
 import (
 	"context"
-	"log"
 	"time"
 
+	"github.com/golang/glog"
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/monologue/apicall"
 	"github.com/google/monologue/client"
@@ -31,7 +31,7 @@ const logStr = "Roots Getter"
 
 // Run starts an STH Getter, which periodically queries a Log for its set of acceptable root certificates and stores them.
 func Run(ctx context.Context, lc *client.LogClient, st storage.APICallWriter, l *ctlog.Log, period time.Duration) {
-	log.Printf("%s: %s: started with period %v", l.URL, logStr, period)
+	glog.Infof("%s: %s: started with period %v", l.URL, logStr, period)
 
 	t := time.NewTicker(period)
 	defer t.Stop()
@@ -41,26 +41,26 @@ func Run(ctx context.Context, lc *client.LogClient, st storage.APICallWriter, l 
 			// TODO(katjoyce): Work out when and where to add context timeouts.
 			getAndStoreRoots(ctx, lc, st, l)
 		case <-ctx.Done():
-			log.Printf("%s: %s: stopped", l.URL, logStr)
+			glog.Infof("%s: %s: stopped", l.URL, logStr)
 			return
 		}
 	}
 }
 
 func getAndStoreRoots(ctx context.Context, lc *client.LogClient, st storage.APICallWriter, l *ctlog.Log) {
-	log.Printf("%s: %s: getting roots...", l.URL, logStr)
+	glog.Infof("%s: %s: getting roots...", l.URL, logStr)
 	roots, httpData, getErr := lc.GetRoots()
 	if getErr != nil {
-		log.Printf("%s: %s: error getting roots: %s", l.URL, logStr, getErr)
+		glog.Infof("%s: %s: error getting roots: %s", l.URL, logStr, getErr)
 	} else {
-		log.Printf("%s: %s: response: %d certificates", l.URL, logStr, len(roots))
+		glog.Infof("%s: %s: response: %d certificates", l.URL, logStr, len(roots))
 	}
 
 	// Store get-roots API call.
 	apiCall := apicall.New(ct.GetRootsStr, httpData, getErr)
-	log.Printf("%s: %s: writing API Call...", l.URL, logStr)
+	glog.Infof("%s: %s: writing API Call...", l.URL, logStr)
 	if err := st.WriteAPICall(ctx, l, apiCall); err != nil {
-		log.Printf("%s: %s: error writing API Call %s: %s", l.URL, logStr, apiCall, err)
+		glog.Infof("%s: %s: error writing API Call %s: %s", l.URL, logStr, apiCall, err)
 	}
 
 	//TODO(RJPercival): Store roots.

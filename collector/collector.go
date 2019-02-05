@@ -23,11 +23,11 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
 	"net/http"
 	"sync"
 	"time"
 
+	"github.com/golang/glog"
 	"github.com/google/monologue/client"
 	"github.com/google/monologue/ctlog"
 	"github.com/google/monologue/rootsgetter"
@@ -46,19 +46,19 @@ var (
 func main() {
 	flag.Parse()
 	if *logURL == "" {
-		log.Fatalf("No Log URL provided.")
+		glog.Exitf("No Log URL provided.")
 	}
 	if *logName == "" {
-		log.Fatalf("No Log name provided.")
+		glog.Exitf("No Log name provided.")
 	}
 	if *b64PubKey == "" {
-		log.Fatalf("No public key provided.")
+		glog.Exitf("No public key provided.")
 	}
 
 	ctx := context.Background()
 	l, err := ctlog.New(*logURL, *logName, *b64PubKey)
 	if err != nil {
-		log.Fatalf("Unable to obtain Log metadata: %s", err)
+		glog.Exitf("Unable to obtain Log metadata: %s", err)
 	}
 
 	lc := client.New(l.URL, &http.Client{})
