@@ -12,13 +12,18 @@ change.
 
 ## Working on the Code
 
+The [`scripts/presubmit.sh`](scripts/presubmit.sh) script runs various tools
+and tests over the codebase.
+
 ```bash
 # Install golangci-lint
 go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
 cd $GOPATH/src/github.com/golangci/golangci-lint/cmd/golangci-lint
 go install -ldflags "-X 'main.version=$(git describe --tags)' -X 'main.commit=$(git rev-parse --short HEAD)' -X 'main.date=$(date)'"
 cd -
-# Run the linters
+# Run build, test and linters
+./scripts/presubmit.sh
+# Or just run the linters alone
 golangci-lint run
 ```
 
