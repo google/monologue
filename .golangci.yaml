@@ -1,0 +1,26 @@
+run:
+  deadline: 90s
+
+linters-settings:
+  gocyclo:
+    min-complexity: 25
+  depguard:
+    list-type: blacklist
+    packages:
+      - golang.org/x/net/context
+      - github.com/gogo/protobuf/proto
+
+linters:
+  disable-all: true
+  enable:
+    - gocyclo
+    - gofmt
+    - goimports
+    - golint
+    - megacheck
+    - misspell
+    - govet
+    - depguard
+    - deadcode
+    - ineffassign
+    - varcheck
