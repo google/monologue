@@ -8,3 +8,17 @@ and the [Chromium Certificate Transparency Log Policy](https://github.com/chromi
 
 This project is currently in development and so may be subject to significant
 change.
+
+
+## Working on the Code
+
+```bash
+# Install golangci-lint
+go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+cd $GOPATH/src/github.com/golangci/golangci-lint/cmd/golangci-lint
+go install -ldflags "-X 'main.version=$(git describe --tags)' -X 'main.commit=$(git rev-parse --short HEAD)' -X 'main.date=$(date)'"
+cd -
+# Run the linters
+golangci-lint run
+```
+
