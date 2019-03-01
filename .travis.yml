@@ -1,1 +1,24 @@
 language: go
+
+env:
+  - WITH_COVERAGE=true
+  - GOFLAGS='-race'
+
+go_import_path: github.com/google/monologue
+
+matrix:
+  fast_finish: true
+
+install:
+  - go get -d -t ./...
+  # Install golangci-lint as per https://github.com/golangci/golangci-lint#install
+  - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.13.2
+
+script:
+  - set -e
+  - ./scripts/presubmit.sh ${WITH_COVERAGE:+--coverage}
+  - set +e
+
+after_success:
+  # Upload coverage info as per https://docs.codecov.io/docs/about-the-codecov-bash-uploader
+  - bash <(curl -s https://codecov.io/bash)
