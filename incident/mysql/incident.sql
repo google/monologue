@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS Incidents(
   Id BIGINT NOT NULL AUTO_INCREMENT UNIQUE,
+  Source VARCHAR(128),
   BaseURL VARCHAR(512),
   Summary VARCHAR(2048),
   Category VARCHAR(512),
@@ -10,6 +11,7 @@ CREATE TABLE IF NOT EXISTS Incidents(
   FOREIGN KEY(OwningId) REFERENCES Incidents(Id)
 );
 
+CREATE INDEX SourceIdx ON Incidents(Source);
 CREATE INDEX BaseURLIdx ON Incidents(BaseURL);
 CREATE INDEX Summary ON Incidents(Summary);
 CREATE INDEX FullURLIdx ON Incidents(FullURL);

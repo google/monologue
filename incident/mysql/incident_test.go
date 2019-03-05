@@ -69,7 +69,7 @@ func TestLogf(t *testing.T) {
 
 	checkContents(ctx, t, nil)
 
-	reporter := NewMySQLReporter(ctx, testDB)
+	reporter := NewMySQLReporter(ctx, testDB, "unittest")
 	e := entry{baseURL: "base", summary: "summary", category: "signature", fullURL: "full", details: "blah"}
 
 	reporter.Log(ctx, e.baseURL, e.summary, e.category, e.fullURL, e.details)

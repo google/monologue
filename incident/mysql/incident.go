@@ -25,13 +25,15 @@ import (
 )
 
 type mysqlReporter struct {
-	db *sql.DB
+	db     *sql.DB
+	source string
 }
 
 // NewMySQLReporter builds an incident.Reporter instance that records incidents
-// in a MySQL database.
-func NewMySQLReporter(ctx context.Context, db *sql.DB) incident.Reporter {
-	return &mysqlReporter{db: db}
+// in a MySQL database, all of which will be marked as emanating from the given
+// source.
+func NewMySQLReporter(ctx context.Context, db *sql.DB, source string) incident.Reporter {
+	return &mysqlReporter{db: db, source: source}
 }
 
 // Log records an incident with the given details.
@@ -42,8 +44,8 @@ func (m *mysqlReporter) Log(ctx context.Context, baseURL, summary, category, ful
 	}
 	defer tx.Commit()
 
-	if _, err = tx.ExecContext(ctx, "INSERT INTO Incidents(BaseURL, Summary, Category, FullURL, Details) VALUES (?, ?, ?, ?, ?);",
-		baseURL, summary, category, fullURL, details); err != nil {
+	if _, err = tx.ExecContext(ctx, "INSERT INTO Incidents(Source, BaseURL, Summary, Category, FullURL, Details) VALUES (?, ?, ?, ?, ?, ?);",
+		m.source, baseURL, summary, category, fullURL, details); err != nil {
 		glog.Errorf("failed to insert incident: %v", err)
 	}
 }
