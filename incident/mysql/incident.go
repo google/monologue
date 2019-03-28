@@ -26,27 +26,25 @@ import (
 
 type mysqlReporter struct {
 	db     *sql.DB
+	stmt   *sql.Stmt
 	source string
 }
 
 // NewMySQLReporter builds an incident.Reporter instance that records incidents
 // in a MySQL database, all of which will be marked as emanating from the given
 // source.
-func NewMySQLReporter(ctx context.Context, db *sql.DB, source string) incident.Reporter {
-	return &mysqlReporter{db: db, source: source}
+func NewMySQLReporter(ctx context.Context, db *sql.DB, source string) (incident.Reporter, error) {
+	stmt, err := db.PrepareContext(ctx, "INSERT INTO Incidents(Source, BaseURL, Summary, Category, FullURL, Details) VALUES (?, ?, ?, ?, ?, ?);")
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare context for %q: %v", source, err)
+	}
+	return &mysqlReporter{db: db, source: source, stmt: stmt}, nil
 }
 
 // Log records an incident with the given details.
 func (m *mysqlReporter) Log(ctx context.Context, baseURL, summary, category, fullURL, details string) {
-	tx, err := m.db.BeginTx(ctx, nil /* opts */)
-	if err != nil {
-		glog.Errorf("failed to create transaction: %v", err)
-	}
-	defer tx.Commit()
-
-	if _, err = tx.ExecContext(ctx, "INSERT INTO Incidents(Source, BaseURL, Summary, Category, FullURL, Details) VALUES (?, ?, ?, ?, ?, ?);",
-		m.source, baseURL, summary, category, fullURL, details); err != nil {
-		glog.Errorf("failed to insert incident: %v", err)
+	if _, err := m.stmt.ExecContext(ctx, m.source, baseURL, summary, category, fullURL, details); err != nil {
+		glog.Errorf("failed to insert incident for %q: %v", m.source, err)
 	}
 }
 

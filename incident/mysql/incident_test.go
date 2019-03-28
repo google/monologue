@@ -22,18 +22,18 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/google/go-cmp/cmp"
 
 	_ "github.com/go-sql-driver/mysql" // Load MySQL driver
 )
 
 type entry struct {
-	baseURL, summary, category, fullURL, details string
+	BaseURL, Summary, Category, FullURL, Details string
 }
 
 func checkContents(ctx context.Context, t *testing.T, want []entry) {
@@ -41,25 +41,28 @@ func checkContents(ctx context.Context, t *testing.T, want []entry) {
 
 	tx, err := testDB.BeginTx(ctx, nil /* opts */)
 	if err != nil {
-		t.Fatalf("failed to create state transaction: %v", err)
+		t.Fatalf("failed to create transaction: %v", err)
 	}
 	defer tx.Commit()
 	rows, err := tx.QueryContext(ctx, "SELECT BaseURL, Summary, Category, FullURL, Details FROM Incidents;")
 	if err != nil {
-		t.Fatalf("failed to query state rows: %v", err)
+		t.Fatalf("failed to query rows: %v", err)
 	}
 	defer rows.Close()
 
 	var got []entry
 	for rows.Next() {
 		var e entry
-		if err := rows.Scan(&e.baseURL, &e.summary, &e.category, &e.fullURL, &e.details); err != nil {
-			t.Fatalf("failed to scan state row: %v", err)
+		if err := rows.Scan(&e.BaseURL, &e.Summary, &e.Category, &e.FullURL, &e.Details); err != nil {
+			t.Fatalf("failed to scan row: %v", err)
 		}
 		got = append(got, e)
 	}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("incident table: got %+v, want %+v", got, want)
+	if err := rows.Err(); err != nil {
+		t.Errorf("incident table iteration failed: %v", err)
+	}
+	if diff := cmp.Diff(got, want); diff != "" {
+		t.Errorf("incident table: diff (-got +want)\n%s", diff)
 	}
 }
 
@@ -69,16 +72,19 @@ func TestLogf(t *testing.T) {
 
 	checkContents(ctx, t, nil)
 
-	reporter := NewMySQLReporter(ctx, testDB, "unittest")
-	e := entry{baseURL: "base", summary: "summary", category: "signature", fullURL: "full", details: "blah"}
+	reporter, err := NewMySQLReporter(ctx, testDB, "unittest")
+	if err != nil {
+		t.Fatalf("failed to build MySQLReporter: %v", err)
+	}
+	e := entry{BaseURL: "base", Summary: "summary", Category: "signature", FullURL: "full", Details: "blah"}
 
-	reporter.Log(ctx, e.baseURL, e.summary, e.category, e.fullURL, e.details)
+	reporter.Log(ctx, e.BaseURL, e.Summary, e.Category, e.FullURL, e.Details)
 	checkContents(ctx, t, []entry{e})
 
-	reporter.Log(ctx, e.baseURL, e.summary, e.category, e.fullURL, e.details)
+	reporter.Log(ctx, e.BaseURL, e.Summary, e.Category, e.FullURL, e.Details)
 	checkContents(ctx, t, []entry{e, e})
 
-	reporter.Logf(ctx, e.baseURL, e.summary, e.category, e.fullURL, "%s", e.details)
+	reporter.Logf(ctx, e.BaseURL, e.Summary, e.Category, e.FullURL, "%s", e.Details)
 	checkContents(ctx, t, []entry{e, e, e})
 }
 
