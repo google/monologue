@@ -18,6 +18,7 @@ package incident
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/golang/glog"
 )
@@ -33,17 +34,15 @@ type Reporter interface {
 	Logf(ctx context.Context, baseURL, summary, category, fullURL, detailsFmt string, args ...interface{})
 }
 
-// LoggingOnlyReporter implements the Reporter interface by simply emitting
+// LoggingReporter implements the Reporter interface by simply emitting
 // log messages.
-type LoggingOnlyReporter struct {
+type LoggingReporter struct {
 }
 
-func (l *LoggingOnlyReporter) Log(ctx context.Context, baseURL, summary, category, fullURL, details string) {
-	glog.Errorf("%s: %s (%s %s)", baseURL, summary, category, fullURL)
-	glog.Errorf("  %s", details)
+func (l *LoggingReporter) Log(ctx context.Context, baseURL, summary, category, fullURL, details string) {
+	glog.Errorf("%s: %s (%s %s)\n  %s", baseURL, summary, category, fullURL, details)
 }
 
-func (l *LoggingOnlyReporter) Logf(ctx context.Context, baseURL, summary, category, fullURL, detailsFmt string, args ...interface{}) {
-	glog.Errorf("%s: %s (%s %s)", baseURL, summary, category, fullURL)
-	glog.Errorf("  "+detailsFmt, args...)
+func (l *LoggingReporter) Logf(ctx context.Context, baseURL, summary, category, fullURL, detailsFmt string, args ...interface{}) {
+	glog.Errorf("%s: %s (%s %s)\n  %s", baseURL, summary, category, fullURL, fmt.Sprintf(detailsFmt, args...))
 }
