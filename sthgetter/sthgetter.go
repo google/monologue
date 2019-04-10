@@ -35,7 +35,7 @@ var logStr = "STH Getter"
 // Run runs an STH Getter, which periodically gets an STH from a Log, checks
 // that each one meets per-STH requirements defined in RFC 6962, and stores
 // them.
-func Run(ctx context.Context, lc *client.LogClient, sv *ct.SignatureVerifier, st storage.APICallWriter, l *ctlog.Log, period time.Duration) {
+func Run(ctx context.Context, lc *client.LogClient, sv *ct.SignatureVerifier, st storage.APICallSTHWriter, l *ctlog.Log, period time.Duration) {
 	glog.Infof("%s: %s: started with period %v", l.URL, logStr, period)
 
 	t := time.NewTicker(period)
@@ -52,7 +52,7 @@ func Run(ctx context.Context, lc *client.LogClient, sv *ct.SignatureVerifier, st
 	}
 }
 
-func getCheckStoreSTH(ctx context.Context, lc *client.LogClient, sv *ct.SignatureVerifier, st storage.APICallWriter, l *ctlog.Log) {
+func getCheckStoreSTH(ctx context.Context, lc *client.LogClient, sv *ct.SignatureVerifier, st storage.APICallSTHWriter, l *ctlog.Log) {
 	// Get STH from Log.
 	glog.Infof("%s: %s: getting STH...", l.URL, logStr)
 	sth, httpData, getErr := lc.GetSTH()
@@ -85,7 +85,11 @@ func getCheckStoreSTH(ctx context.Context, lc *client.LogClient, sv *ct.Signatur
 		glog.Infof("%s: %s: %s", l.URL, logStr, b.String())
 	}
 
-	// TODO(katjoyce): Store STH & errs.
+	// Store STH & associated errors.
+	glog.Infof("%s: %s: writing STH...", l.URL, logStr)
+	if err := st.WriteSTH(ctx, l, sth, errs); err != nil {
+		glog.Infof("%s: %s: error writing STH %s and associated errors: %s", l.URL, logStr, sth, err)
+	}
 }
 
 func checkSTH(sth *ct.SignedTreeHead, receivedAt time.Time, sv *ct.SignatureVerifier, l *ctlog.Log) []error {
