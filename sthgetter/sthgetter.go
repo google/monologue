@@ -19,8 +19,6 @@ package sthgetter
 import (
 	"context"
 	"fmt"
-	"log"
-	"reflect"
 	"strings"
 	"time"
 
@@ -82,9 +80,9 @@ func getCheckStoreSTH(ctx context.Context, lc *client.LogClient, sv *ct.Signatur
 		var b strings.Builder
 		fmt.Fprintf(&b, "STH verification errors for STH %v:", sth)
 		for _, e := range errs {
-			fmt.Fprintf(&b, "\n\t%v: %v,", reflect.TypeOf(e), e)
+			fmt.Fprintf(&b, "\n\t%T: %v,", e, e)
 		}
-		glog.Info(b.String())
+		glog.Infof("%s: %s: %s", l.URL, logStr, b.String())
 	}
 
 	// TODO(katjoyce): Store STH & errs.
@@ -93,16 +91,16 @@ func getCheckStoreSTH(ctx context.Context, lc *client.LogClient, sv *ct.Signatur
 func checkSTH(sth *ct.SignedTreeHead, receivedAt time.Time, sv *ct.SignatureVerifier, l *ctlog.Log) []error {
 	var errs []error
 	// Check that the STH signature verifies.
-	log.Printf("%s: %s: verifying STH signature...", l.URL, logStr)
+	glog.Infof("%s: %s: verifying STH signature...", l.URL, logStr)
 	if err := sv.VerifySTHSignature(*sth); err != nil {
 		errs = append(errs, &SignatureVerificationError{Err: err})
-		log.Printf("%s: %s: STH signature verification failed", l.URL, logStr)
+		glog.Infof("%s: %s: STH signature verification failed", l.URL, logStr)
 	}
 
 	// Check STH is not older than the MMD of the Log.
 	if err := checkSTHTimestamp(sth, receivedAt, l.MMD); err != nil {
 		errs = append(errs, &OldTimestampError{Err: err})
-		log.Printf("%s: %s: STH timestamp verification failed", l.URL, logStr)
+		glog.Infof("%s: %s: STH timestamp verification failed", l.URL, logStr)
 	}
 
 	// TODO(katjoyce): Implement other checks on the STH:

@@ -25,10 +25,6 @@ import (
 	"github.com/google/monologue/ctlog"
 )
 
-func timeToUnixTime(t time.Time) uint64 {
-	return uint64(t.UnixNano() / time.Millisecond.Nanoseconds())
-}
-
 func mustB64Decode(b64 string) []byte {
 	b, err := base64.StdEncoding.DecodeString(b64)
 	if err != nil {
@@ -118,7 +114,7 @@ func TestCheckSTH(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			sth, err := test.sth.ToSignedTreeHead()
 			if err != nil {
-				t.Fatalf("bad bad: %s", err)
+				t.Fatalf("error converting ct.GetSTHResponse to ct.SignedTreeHead: %s", err)
 			}
 
 			errs := checkSTH(sth, test.receivedAt, sv, l)
@@ -176,7 +172,7 @@ func TestCheckSTHTimestamp(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			sth := &ct.SignedTreeHead{
-				Timestamp: timeToUnixTime(test.sthTimestamp),
+				Timestamp: uint64(test.sthTimestamp.UnixNano() / time.Millisecond.Nanoseconds()),
 			}
 			err := checkSTHTimestamp(sth, test.receivedAt, test.mmd)
 			if gotErr := (err != nil); gotErr != test.wantErr {
