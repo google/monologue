@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/monologue/client"
 	"github.com/google/monologue/ctlog"
 	"github.com/google/monologue/rootsgetter"
@@ -41,6 +42,7 @@ var (
 	logURL         = flag.String("log_url", "", "The URL of the Log to monitor, e.g. https://ct.googleapis.com/pilot/")
 	logName        = flag.String("log_name", "", "A short, snappy, canonical name for the Log to monitor, e.g. google_pilot")
 	b64PubKey      = flag.String("public_key", "", "The base64-encoded public key of the Log to monitor")
+	mmd            = flag.Duration("mmd", 24*time.Hour, "The Maximum Merge Delay for the Log")
 )
 
 func main() {
@@ -56,12 +58,17 @@ func main() {
 	}
 
 	ctx := context.Background()
-	l, err := ctlog.New(*logURL, *logName, *b64PubKey)
+	l, err := ctlog.New(*logURL, *logName, *b64PubKey, *mmd)
 	if err != nil {
 		glog.Exitf("Unable to obtain Log metadata: %s", err)
 	}
 
 	lc := client.New(l.URL, &http.Client{})
+
+	sv, err := ct.NewSignatureVerifier(l.PublicKey)
+	if err != nil {
+		glog.Exitf("Couldn't create signature verifier: %s", err)
+	}
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -70,7 +77,7 @@ func main() {
 		wg.Done()
 	}()
 	go func() {
-		sthgetter.Run(ctx, lc, &print.Storage{}, l, *sthGetPeriod)
+		sthgetter.Run(ctx, lc, sv, &print.Storage{}, l, *sthGetPeriod)
 		wg.Done()
 	}()
 	wg.Wait()

@@ -21,6 +21,7 @@ package ctlog
 import (
 	"crypto"
 	"fmt"
+	"time"
 
 	ct "github.com/google/certificate-transparency-go"
 )
@@ -30,6 +31,7 @@ type Log struct {
 	Name      string
 	URL       string
 	PublicKey crypto.PublicKey
+	MMD       time.Duration
 }
 
 // New creates a Log structure, populating the fields appropriately.
@@ -37,7 +39,7 @@ type Log struct {
 // TODO(katjoyce): replace this implementation with something less hacky that
 // takes log details from a log list struct based on the new Log list JSON
 // schema.
-func New(url, name, b64PubKey string) (*Log, error) {
+func New(url, name, b64PubKey string, mmd time.Duration) (*Log, error) {
 	pk, err := ct.PublicKeyFromB64(b64PubKey)
 	if err != nil {
 		return nil, fmt.Errorf("ct.PublicKeyFromB64(): %s", err)
@@ -46,5 +48,6 @@ func New(url, name, b64PubKey string) (*Log, error) {
 		Name:      name,
 		URL:       url,
 		PublicKey: pk,
+		MMD:       mmd,
 	}, nil
 }
