@@ -108,7 +108,7 @@ func TestMain(m *testing.M) {
 
 var (
 	testDB      *sql.DB
-	dataSource  = "root@/"
+	dataSource  = "root@tcp(127.0.0.1)/"
 	incidentSQL = "incident.sql"
 )
 
