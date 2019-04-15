@@ -57,7 +57,7 @@ func getCheckStoreSTH(ctx context.Context, lc *client.LogClient, sv *ct.Signatur
 	glog.Infof("%s: %s: getting STH...", l.URL, logStr)
 	sth, httpData, getErr := lc.GetSTH()
 	if getErr != nil {
-		glog.Infof("%s: %s: error getting STH: %s", l.URL, logStr, getErr)
+		glog.Errorf("%s: %s: error getting STH: %s", l.URL, logStr, getErr)
 	}
 	if len(httpData.Body) > 0 {
 		glog.Infof("%s: %s: response: %s", l.URL, logStr, httpData.Body)
@@ -67,7 +67,7 @@ func getCheckStoreSTH(ctx context.Context, lc *client.LogClient, sv *ct.Signatur
 	apiCall := apicall.New(ct.GetSTHStr, httpData, getErr)
 	glog.Infof("%s: %s: writing API Call...", l.URL, logStr)
 	if err := st.WriteAPICall(ctx, l, apiCall); err != nil {
-		glog.Infof("%s: %s: error writing API Call %s: %s", l.URL, logStr, apiCall, err)
+		glog.Errorf("%s: %s: error writing API Call %s: %s", l.URL, logStr, apiCall, err)
 	}
 
 	if sth == nil {
@@ -94,18 +94,23 @@ func checkSTH(sth *ct.SignedTreeHead, receivedAt time.Time, sv *ct.SignatureVeri
 	glog.Infof("%s: %s: verifying STH signature...", l.URL, logStr)
 	if err := sv.VerifySTHSignature(*sth); err != nil {
 		errs = append(errs, &SignatureVerificationError{Err: err})
-		glog.Infof("%s: %s: STH signature verification failed", l.URL, logStr)
+		glog.Warningf("%s: %s: STH signature verification failed", l.URL, logStr)
 	}
 
 	// Check STH is not older than the MMD of the Log.
 	if err := checkSTHTimestamp(sth, receivedAt, l.MMD); err != nil {
 		errs = append(errs, &OldTimestampError{Err: err})
-		glog.Infof("%s: %s: STH timestamp verification failed", l.URL, logStr)
+		glog.Warningf("%s: %s: STH timestamp verification failed", l.URL, logStr)
 	}
 
 	// TODO(katjoyce): Implement other checks on the STH:
-	// Check that the root hash isn't different from any previously known root hashes for this tree size.
-	// If tree size is 0, Check that the root hash is the SHA-256 hash of the empty string.
+	// - Check that the root hash isn't different from any previously known root
+	// hashes for this tree size.
+	// - If tree size is 0, Check that the root hash is the SHA-256 hash of the
+	// empty string.
+	// - Check that the root hash is the right length? Question because client
+	// code already checks this when converting ct.GetSTHResponse to
+	// ct.SignedTreeHead.
 
 	return errs
 }
