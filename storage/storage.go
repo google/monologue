@@ -34,9 +34,3 @@ type APICallWriter interface {
 type STHWriter interface {
 	WriteSTH(ctx context.Context, l *ctlog.Log, sth *ct.SignedTreeHead, errs []error) error
 }
-
-// APICallSTHWriter represents a type that can store API Calls and store STHs.
-type APICallSTHWriter interface {
-	APICallWriter
-	STHWriter
-}

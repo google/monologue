@@ -32,10 +32,16 @@ import (
 
 var logStr = "STH Getter"
 
+// APICallSTHWriter represents a type that can store API Calls and store STHs.
+type APICallSTHWriter interface {
+	storage.APICallWriter
+	storage.STHWriter
+}
+
 // Run runs an STH Getter, which periodically gets an STH from a Log, checks
 // that each one meets per-STH requirements defined in RFC 6962, and stores
 // them.
-func Run(ctx context.Context, lc *client.LogClient, sv *ct.SignatureVerifier, st storage.APICallSTHWriter, l *ctlog.Log, period time.Duration) {
+func Run(ctx context.Context, lc *client.LogClient, sv *ct.SignatureVerifier, st APICallSTHWriter, l *ctlog.Log, period time.Duration) {
 	glog.Infof("%s: %s: started with period %v", l.URL, logStr, period)
 
 	t := time.NewTicker(period)
@@ -52,7 +58,7 @@ func Run(ctx context.Context, lc *client.LogClient, sv *ct.SignatureVerifier, st
 	}
 }
 
-func getCheckStoreSTH(ctx context.Context, lc *client.LogClient, sv *ct.SignatureVerifier, st storage.APICallSTHWriter, l *ctlog.Log) {
+func getCheckStoreSTH(ctx context.Context, lc *client.LogClient, sv *ct.SignatureVerifier, st APICallSTHWriter, l *ctlog.Log) {
 	// Get STH from Log.
 	glog.Infof("%s: %s: getting STH...", l.URL, logStr)
 	sth, httpData, getErr := lc.GetSTH()
