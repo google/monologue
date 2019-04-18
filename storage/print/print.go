@@ -38,7 +38,7 @@ func (s *Storage) WriteAPICall(ctx context.Context, l *ctlog.Log, apiCall *apica
 	return nil
 }
 
-// WriteAPICall simply prints the STH and errors passed to it.
+// WriteSTH simply prints the STH and errors passed to it.
 func (s *Storage) WriteSTH(ctx context.Context, l *ctlog.Log, sth *ct.SignedTreeHead, errs []error) error {
 	glog.Infof("%s:\n\tSTH: %s\n\tVerification errors: %s", l.Name, sth, errs)
 	return nil
