@@ -137,6 +137,7 @@ func checkSTHTimestamp(sth *ct.SignedTreeHead, receivedAt time.Time, mmd time.Du
 	return nil
 }
 
+// SignatureVerificationError indicates that an STH signature did not validate.
 // TODO(katjoyce): Work out whether there's any info that should be saved
 // separately in these error types.
 type SignatureVerificationError struct {
@@ -147,6 +148,7 @@ func (e *SignatureVerificationError) Error() string {
 	return e.Err.Error()
 }
 
+// OldTimestampError indicates that an STH was older than the MMD of the Log.
 type OldTimestampError struct {
 	Err error
 }
