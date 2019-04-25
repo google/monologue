@@ -39,10 +39,12 @@ type Reporter interface {
 type LoggingReporter struct {
 }
 
+// Log emits a log message for the incident details.
 func (l *LoggingReporter) Log(ctx context.Context, baseURL, summary, category, fullURL, details string) {
 	glog.Errorf("%s: %s (%s %s)\n  %s", baseURL, summary, category, fullURL, details)
 }
 
+// Logf emits a log message for the incident details, formatting parameters along the way.
 func (l *LoggingReporter) Logf(ctx context.Context, baseURL, summary, category, fullURL, detailsFmt string, args ...interface{}) {
 	glog.Errorf("%s: %s (%s %s)\n  %s", baseURL, summary, category, fullURL, fmt.Sprintf(detailsFmt, args...))
 }
