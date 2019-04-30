@@ -81,7 +81,8 @@ func getCheckStoreSTH(ctx context.Context, lc *client.LogClient, sv *ct.Signatur
 	}
 
 	// Verify the STH.
-	errs := checkSTH(sth, apiCall.End, sv, l)
+	receivedAt := apiCall.End
+	errs := checkSTH(sth, receivedAt, sv, l)
 	if len(errs) != 0 {
 		var b strings.Builder
 		fmt.Fprintf(&b, "STH verification errors for STH %v:", sth)
@@ -93,7 +94,7 @@ func getCheckStoreSTH(ctx context.Context, lc *client.LogClient, sv *ct.Signatur
 
 	// Store STH & associated errors.
 	glog.Infof("%s: %s: writing STH...", l.URL, logStr)
-	if err := st.WriteSTH(ctx, l, sth, errs); err != nil {
+	if err := st.WriteSTH(ctx, l, sth, receivedAt, errs); err != nil {
 		glog.Infof("%s: %s: error writing STH %s and associated errors: %s", l.URL, logStr, sth, err)
 	}
 }

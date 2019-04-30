@@ -18,6 +18,7 @@ package storage
 
 import (
 	"context"
+	"time"
 
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/monologue/apicall"
@@ -32,5 +33,5 @@ type APICallWriter interface {
 
 // STHWriter is an interface for storing STHs received from a CT Log.
 type STHWriter interface {
-	WriteSTH(ctx context.Context, l *ctlog.Log, sth *ct.SignedTreeHead, errs []error) error
+	WriteSTH(ctx context.Context, l *ctlog.Log, sth *ct.SignedTreeHead, receivedAt time.Time, errs []error) error
 }
