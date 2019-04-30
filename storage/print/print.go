@@ -22,6 +22,7 @@ package print
 
 import (
 	"context"
+	"time"
 
 	"github.com/golang/glog"
 	ct "github.com/google/certificate-transparency-go"
@@ -39,7 +40,7 @@ func (s *Storage) WriteAPICall(ctx context.Context, l *ctlog.Log, apiCall *apica
 }
 
 // WriteSTH simply prints the STH and errors passed to it.
-func (s *Storage) WriteSTH(ctx context.Context, l *ctlog.Log, sth *ct.SignedTreeHead, errs []error) error {
+func (s *Storage) WriteSTH(ctx context.Context, l *ctlog.Log, sth *ct.SignedTreeHead, receivedAt time.Time, errs []error) error {
 	glog.Infof("%s:\n\tSTH: %s\n\tVerification errors: %s", l.Name, sth, errs)
 	return nil
 }
