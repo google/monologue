@@ -45,7 +45,7 @@ func NewMySQLReporter(ctx context.Context, db *sql.DB, source string) (incident.
 // Log records an incident with the given details.
 func (m *mysqlReporter) Log(ctx context.Context, baseURL, summary, category, fullURL, details string) {
 	now := time.Now()
-	glog.Errorf("%s: %s (%s %s)\n  %s at %v", baseURL, summary, category, fullURL, details, now)
+	glog.Errorf("[%s] %s: %s (category=%s url=%s)\n  %s", now, baseURL, summary, category, fullURL, details)
 	if _, err := m.stmt.ExecContext(ctx, now, m.source, baseURL, summary, category, fullURL, details); err != nil {
 		glog.Errorf("failed to insert incident for %q: %v", m.source, err)
 	}
