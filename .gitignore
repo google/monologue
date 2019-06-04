@@ -1,5 +1,4 @@
 .vscode/
 *.swp
 *.exe
-/collector
 /coverage.txt
