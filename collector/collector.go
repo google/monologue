@@ -12,73 +12,81 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Collector runs a tool to collect the data needed to monitor a single
+// Package collector runs a tool to collect the data needed to monitor a single
 // Certificate Transparency Log, which can then be used to check that it is
 // adhering to RFC 6962.
-//
-// TODO(katjoyce): Once it contains more functionality, turn this into a package
-// so that it can be run on multiple Logs by spinning up one per Log.
-package main
+package collector
 
 import (
 	"context"
-	"flag"
+	"errors"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
 
-	"github.com/golang/glog"
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/monologue/client"
 	"github.com/google/monologue/ctlog"
 	"github.com/google/monologue/rootsgetter"
 	"github.com/google/monologue/sthgetter"
-	"github.com/google/monologue/storage/print"
+	"github.com/google/monologue/storage"
 )
 
-var (
-	rootsGetPeriod = flag.Duration("roots_get_period", 5*time.Minute, "How regularly the monitor should get root certificates from the Log")
-	sthGetPeriod   = flag.Duration("sth_get_period", 1*time.Minute, "How regularly the monitor should get an STH from the Log")
-	logURL         = flag.String("log_url", "", "The URL of the Log to monitor, e.g. https://ct.googleapis.com/pilot/")
-	logName        = flag.String("log_name", "", "A short, snappy, canonical name for the Log to monitor, e.g. google_pilot")
-	b64PubKey      = flag.String("public_key", "", "The base64-encoded public key of the Log to monitor")
-	mmd            = flag.Duration("mmd", 24*time.Hour, "The Maximum Merge Delay for the Log")
-)
+// Config contains all of the configuration details for running the collector
+// for a particular Log.
+type Config struct {
+	// Details of the Log to collect data from.
+	Log *ctlog.Log
+	// How regularly the monitor should get an STH from the Log.
+	// To disable STH-getting, set to 0.
+	STHGetPeriod time.Duration
+	// How regularly the monitor should get root certificates from the Log.
+	// To disable roots-getting, set to 0.
+	RootsGetPeriod time.Duration
+}
 
-func main() {
-	flag.Parse()
-	if *logURL == "" {
-		glog.Exitf("No Log URL provided.")
+// Storage is an interface containing all of the storage methods required by
+// Monologue.  It will therefore satisfy every interface needed by the various
+// modules that the collector runs (e.g. sthgetter, rootsgetter etc).
+type Storage interface {
+	storage.APICallWriter
+	storage.STHWriter
+}
+
+// Run runs the collector on the Log specified in cfg, and stores the collected
+// data in st.
+func Run(ctx context.Context, cfg *Config, cl *http.Client, st Storage) error {
+	if cfg == nil {
+		return errors.New("nil Config")
 	}
-	if *logName == "" {
-		glog.Exitf("No Log name provided.")
-	}
-	if *b64PubKey == "" {
-		glog.Exitf("No public key provided.")
+	if cfg.Log == nil {
+		return errors.New("no Log provided in Config")
 	}
 
-	ctx := context.Background()
-	l, err := ctlog.New(*logURL, *logName, *b64PubKey, *mmd)
+	lc := client.New(cfg.Log.URL, cl)
+
+	sv, err := ct.NewSignatureVerifier(cfg.Log.PublicKey)
 	if err != nil {
-		glog.Exitf("Unable to obtain Log metadata: %s", err)
-	}
-
-	lc := client.New(l.URL, &http.Client{})
-
-	sv, err := ct.NewSignatureVerifier(l.PublicKey)
-	if err != nil {
-		glog.Exitf("Couldn't create signature verifier: %s", err)
+		return fmt.Errorf("couldn't create signature verifier: %s", err)
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() {
-		rootsgetter.Run(ctx, lc, &print.Storage{}, l, *rootsGetPeriod)
-		wg.Done()
-	}()
-	go func() {
-		sthgetter.Run(ctx, lc, sv, &print.Storage{}, l, *sthGetPeriod)
-		wg.Done()
-	}()
+	if cfg.STHGetPeriod > 0 {
+		wg.Add(1)
+		go func() {
+			sthgetter.Run(ctx, lc, sv, st, cfg.Log, cfg.STHGetPeriod)
+			wg.Done()
+		}()
+	}
+	if cfg.RootsGetPeriod > 0 {
+		wg.Add(1)
+		go func() {
+			rootsgetter.Run(ctx, lc, st, cfg.Log, cfg.RootsGetPeriod)
+			wg.Done()
+		}()
+	}
 	wg.Wait()
+
+	return nil
 }
