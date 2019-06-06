@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package collector runs a tool to collect the data needed to monitor a single
-// Certificate Transparency Log, which can then be used to check that it is
-// adhering to RFC 6962.
+// Package collector fetches the data needed to monitor a single Certificate
+// Transparency Log, which can then be used to check that it is adhering to RFC
+// 6962.
 package collector
 
 import (
@@ -39,11 +39,11 @@ type Config struct {
 	// Details of the Log to collect data from.
 	Log *ctlog.Log
 	// How regularly the monitor should get an STH from the Log.
-	// To disable STH-getting, set to 0.
-	STHGetPeriod time.Duration
+	// To disable getting STHs, set to 0.
+	GetSTHPeriod time.Duration
 	// How regularly the monitor should get root certificates from the Log.
-	// To disable roots-getting, set to 0.
-	RootsGetPeriod time.Duration
+	// To disable getting roots, set to 0.
+	GetRootsPeriod time.Duration
 }
 
 // Storage is an interface containing all of the storage methods required by
@@ -55,7 +55,7 @@ type Storage interface {
 }
 
 // Run runs the collector on the Log specified in cfg, and stores the collected
-// data in st.
+// data in st.  Run doesn't return unless an error occurs or ctx expires.
 func Run(ctx context.Context, cfg *Config, cl *http.Client, st Storage) error {
 	if cfg == nil {
 		return errors.New("nil Config")
@@ -72,17 +72,17 @@ func Run(ctx context.Context, cfg *Config, cl *http.Client, st Storage) error {
 	}
 
 	var wg sync.WaitGroup
-	if cfg.STHGetPeriod > 0 {
+	if cfg.GetSTHPeriod > 0 {
 		wg.Add(1)
 		go func() {
-			sthgetter.Run(ctx, lc, sv, st, cfg.Log, cfg.STHGetPeriod)
+			sthgetter.Run(ctx, lc, sv, st, cfg.Log, cfg.GetSTHPeriod)
 			wg.Done()
 		}()
 	}
-	if cfg.RootsGetPeriod > 0 {
+	if cfg.GetRootsPeriod > 0 {
 		wg.Add(1)
 		go func() {
-			rootsgetter.Run(ctx, lc, st, cfg.Log, cfg.RootsGetPeriod)
+			rootsgetter.Run(ctx, lc, st, cfg.Log, cfg.GetRootsPeriod)
 			wg.Done()
 		}()
 	}
