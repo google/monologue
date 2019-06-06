@@ -14,7 +14,7 @@
 
 // Datacollector runs a tool to collect the data needed to monitor Certificate
 // Transparency Logs, which can then be used to check that they are adhering to
-//RFC 6962.
+// RFC 6962.
 package main
 
 import (
@@ -30,8 +30,8 @@ import (
 )
 
 var (
-	rootsGetPeriod = flag.Duration("roots_get_period", 0, "How regularly the monitor should get root certificates from the Log")
-	sthGetPeriod   = flag.Duration("sth_get_period", 0, "How regularly the monitor should get an STH from the Log")
+	getRootsPeriod = flag.Duration("get_roots_period", 0, "How regularly the monitor should get root certificates from the Log")
+	getSTHPeriod   = flag.Duration("get_sth_period", 0, "How regularly the monitor should get an STH from the Log")
 	// TODO(katjoyce): Change to read from log_list.json or all_logs_list.json to get Log details.
 	// TODO(katjoyce): Add ability to run against multiple Logs.
 	logURL    = flag.String("log_url", "", "The URL of the Log to monitor, e.g. https://ct.googleapis.com/pilot/")
@@ -43,13 +43,13 @@ var (
 func main() {
 	flag.Parse()
 	if *logURL == "" {
-		glog.Exitf("No Log URL provided.")
+		glog.Exit("No Log URL provided.")
 	}
 	if *logName == "" {
-		glog.Exitf("No Log name provided.")
+		glog.Exit("No Log name provided.")
 	}
 	if *b64PubKey == "" {
-		glog.Exitf("No public key provided.")
+		glog.Exit("No public key provided.")
 	}
 
 	ctx := context.Background()
@@ -60,9 +60,11 @@ func main() {
 
 	cfg := &collector.Config{
 		Log:            l,
-		STHGetPeriod:   *sthGetPeriod,
-		RootsGetPeriod: *rootsGetPeriod,
+		GetSTHPeriod:   *getSTHPeriod,
+		GetRootsPeriod: *getRootsPeriod,
 	}
 
-	collector.Run(ctx, cfg, &http.Client{}, &print.Storage{})
+	if err := collector.Run(ctx, cfg, &http.Client{}, &print.Storage{}); err != nil {
+		glog.Exit(err)
+	}
 }
