@@ -24,6 +24,7 @@ import (
 
 	"github.com/golang/glog"
 	ct "github.com/google/certificate-transparency-go"
+	"github.com/google/certificate-transparency-go/schedule"
 	"github.com/google/monologue/apicall"
 	"github.com/google/monologue/client"
 	"github.com/google/monologue/ctlog"
@@ -44,18 +45,11 @@ type APICallSTHWriter interface {
 func Run(ctx context.Context, lc *client.LogClient, sv *ct.SignatureVerifier, st APICallSTHWriter, l *ctlog.Log, period time.Duration) {
 	glog.Infof("%s: %s: started with period %v", l.URL, logStr, period)
 
-	t := time.NewTicker(period)
-	defer t.Stop()
-	for {
-		select {
-		case <-t.C:
-			// TODO(katjoyce): Work out when and where to add context timeouts.
-			getCheckStoreSTH(ctx, lc, sv, st, l)
-		case <-ctx.Done():
-			glog.Infof("%s: %s: stopped", l.URL, logStr)
-			return
-		}
-	}
+	schedule.Every(ctx, period, func(ctx context.Context) {
+		getCheckStoreSTH(ctx, lc, sv, st, l)
+	})
+
+	glog.Infof("%s: %s: stopped", l.URL, logStr)
 }
 
 func getCheckStoreSTH(ctx context.Context, lc *client.LogClient, sv *ct.SignatureVerifier, st APICallSTHWriter, l *ctlog.Log) {
