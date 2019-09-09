@@ -19,7 +19,6 @@
 package client
 
 import (
-	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -30,7 +29,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang/glog"
 	ct "github.com/google/certificate-transparency-go"
+	"github.com/google/certificate-transparency-go/x509"
 )
 
 // LogClient is a client for a specific CT Log.
@@ -225,11 +226,15 @@ func (lc *LogClient) GetRoots() ([]*x509.Certificate, *HTTPData, error) {
 	for i, certB64 := range resp.Certificates {
 		roots[i], err = parseCertificate(certB64)
 		if err != nil {
-			return nil, httpData, &ResponseToStructError{
-				From: reflect.TypeOf(resp),
-				To:   reflect.TypeOf(roots),
-				Err:  fmt.Errorf("certificates[%d] is invalid: %s", i, err),
+			if x509.IsFatal(err) {
+				return nil, httpData, &ResponseToStructError{
+					From: reflect.TypeOf(resp),
+					To:   reflect.TypeOf(roots),
+					Err:  fmt.Errorf("certificates[%d] is invalid: %s", i, err),
+				}
 			}
+
+			glog.V(1).Infof("%s: certificates[%d] (%q) has non-fatal errors: %s", httpData.Response.Request.URL, i, roots[i].Subject, err)
 		}
 	}
 

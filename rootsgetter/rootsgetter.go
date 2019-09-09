@@ -17,13 +17,13 @@ package rootsgetter
 
 import (
 	"context"
-	"crypto/x509"
 	"fmt"
 	"time"
 
 	"github.com/golang/glog"
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/certificate-transparency-go/schedule"
+	"github.com/google/certificate-transparency-go/x509"
 	"github.com/google/monologue/apicall"
 	"github.com/google/monologue/client"
 	"github.com/google/monologue/ctlog"
