@@ -259,16 +259,28 @@ func TestGetSTH(t *testing.T) {
 			wantErrType: reflect.TypeOf(&JSONParseError{}),
 		},
 		{
-			name:        "STH missing tree size",
-			statusCode:  http.StatusOK,
-			body:        []byte(sthMissingTreeSize),
-			wantErrType: reflect.TypeOf(&ResponseToStructError{}),
+			name:       "STH missing tree size",
+			statusCode: http.StatusOK,
+			body:       []byte(sthMissingTreeSize),
+			// TODO(RJPercival): Return error for missing tree_size
+			wantSTH: &ct.GetSTHResponse{
+				TreeSize:          0,
+				Timestamp:         1534165797863,
+				SHA256RootHash:    mustB64Decode("ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU="),
+				TreeHeadSignature: mustB64Decode("BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="),
+			},
 		},
 		{
-			name:        "STH missing timestamp",
-			statusCode:  http.StatusOK,
-			body:        []byte(sthMissingTimestamp),
-			wantErrType: reflect.TypeOf(&ResponseToStructError{}),
+			name:       "STH missing timestamp",
+			statusCode: http.StatusOK,
+			body:       []byte(sthMissingTimestamp),
+			// TODO(RJPercival): Return error for missing timestamp
+			wantSTH: &ct.GetSTHResponse{
+				TreeSize:          344104340,
+				Timestamp:         0,
+				SHA256RootHash:    mustB64Decode("ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU="),
+				TreeHeadSignature: mustB64Decode("BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="),
+			},
 		},
 		{
 			name:        "STH missing root hash",
