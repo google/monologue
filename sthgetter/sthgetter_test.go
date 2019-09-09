@@ -51,7 +51,7 @@ var (
 
 func TestCheckSTH(t *testing.T) {
 	// Create Log structure.
-	l, err := ctlog.New("https://ct.googleapis.com", "google_pilot", b64PubKey, 24*time.Hour)
+	l, err := ctlog.New("https://ct.googleapis.com", "google_pilot", b64PubKey, 24*time.Hour, nil)
 	if err != nil {
 		t.Fatalf("Unable to obtain Log metadata: %s", err)
 	}
