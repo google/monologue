@@ -53,7 +53,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	l, err := ctlog.New(*logURL, *logName, *b64PubKey, *mmd, time.Time{}, time.Time{})
+	l, err := ctlog.New(*logURL, *logName, *b64PubKey, *mmd, nil)
 	if err != nil {
 		glog.Exitf("Unable to obtain Log metadata: %s", err)
 	}

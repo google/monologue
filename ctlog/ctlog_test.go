@@ -1,4 +1,4 @@
-// Copyright 2018 Google LLC
+// Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,25 +23,33 @@ import (
 
 func TestNewTemporalInterval(t *testing.T) {
 	tests := []struct {
-		desc  string
-		start time.Time
-		end   time.Time
-		want  Interval
+		desc     string
+		interval *Interval
+		want     *Interval
 	}{
 		{
-			desc:  "strip nanos",
-			start: time.Date(2019, time.March, 25, 0, 0, 0, 1, time.UTC),
-			end:   time.Date(2019, time.March, 25, 23, 59, 59, 999999999, time.UTC),
-			want: Interval{
+			desc:     "nil interval",
+			interval: nil,
+			want:     nil,
+		},
+		{
+			desc: "strip nanos",
+			interval: &Interval{
+				Start: time.Date(2019, time.March, 25, 0, 0, 0, 1, time.UTC),
+				End:   time.Date(2019, time.March, 25, 23, 59, 59, 999999999, time.UTC),
+			},
+			want: &Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
 				End:   time.Date(2019, time.March, 25, 23, 59, 59, 0, time.UTC),
 			},
 		},
 		{
-			desc:  "no nanos",
-			start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
-			end:   time.Date(2019, time.March, 25, 23, 59, 59, 0, time.UTC),
-			want: Interval{
+			desc: "no nanos",
+			interval: &Interval{
+				Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
+				End:   time.Date(2019, time.March, 25, 23, 59, 59, 0, time.UTC),
+			},
+			want: &Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
 				End:   time.Date(2019, time.March, 25, 23, 59, 59, 0, time.UTC),
 			},
@@ -54,12 +62,14 @@ func TestNewTemporalInterval(t *testing.T) {
 	mmd := 24 * time.Hour
 
 	for _, test := range tests {
-		got, err := New(url, name, b64PubKey, mmd, test.start, test.end)
-		if err != nil {
-			t.Errorf("%s: New(%s, %s, %s, %s, %s, %s) = _, %s, want no error", test.desc, url, name, b64PubKey, mmd, test.start, test.end, err)
-		}
-		if diff := pretty.Compare(test.want, got.TemporalInterval); diff != "" {
-			t.Errorf("%s: New(%s, %s, %s, %s, %s, %s) returned TemporalInterval diff (-want +got):\n%s", test.desc, url, name, b64PubKey, mmd, test.start, test.end, diff)
-		}
+		t.Run(test.desc, func(t *testing.T) {
+			got, err := New(url, name, b64PubKey, mmd, test.interval)
+			if err != nil {
+				t.Fatalf("New(%q, %q, %q, %s, %+v) = _, %s, want no error", url, name, b64PubKey, mmd, test.interval, err)
+			}
+			if diff := pretty.Compare(test.want, got.TemporalInterval); diff != "" {
+				t.Fatalf("New(%q, %q, %q, %s, %+v) returned TemporalInterval diff (-want +got):\n%s", url, name, b64PubKey, mmd, test.interval, diff)
+			}
+		})
 	}
 }

@@ -48,26 +48,22 @@ type Log struct {
 
 // New creates a Log structure, populating the fields appropriately.
 //
+// If the Log is not a temporal shard, interval should be nil.
+//
 // TODO(katjoyce): replace this implementation with something less hacky that
 // takes log details from a log list struct based on the new Log list JSON
 // schema.
-func New(url, name, b64PubKey string, mmd time.Duration, temporalStart, temporalEnd time.Time) (*Log, error) {
+func New(url, name, b64PubKey string, mmd time.Duration, interval *Interval) (*Log, error) {
 	pk, err := ct.PublicKeyFromB64(b64PubKey)
 	if err != nil {
 		return nil, fmt.Errorf("ct.PublicKeyFromB64(): %s", err)
 	}
 
-	// If only one of the temporal interval values is set, return an error.
-	if (temporalStart.IsZero() && !temporalEnd.IsZero()) ||
-		(!temporalStart.IsZero() && temporalEnd.IsZero()) {
-		return nil, fmt.Errorf("either both or neither of temporalStart and temporalEnd must be set. temporalStart = %s, temporalEnd = %s", temporalStart, temporalEnd)
-	}
-
 	var ti *Interval
-	if !temporalStart.IsZero() && !temporalEnd.IsZero() {
+	if interval != nil {
 		ti = &Interval{
-			Start: temporalStart.Truncate(time.Second),
-			End:   temporalEnd.Truncate(time.Second),
+			Start: interval.Start.Truncate(time.Second),
+			End:   interval.End.Truncate(time.Second),
 		}
 	}
 
