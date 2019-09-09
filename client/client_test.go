@@ -16,7 +16,6 @@ package client
 
 import (
 	"bytes"
-	"crypto/x509"
 	"encoding/base64"
 	"fmt"
 	"net/http"
@@ -25,6 +24,7 @@ import (
 	"testing"
 
 	ct "github.com/google/certificate-transparency-go"
+	"github.com/google/certificate-transparency-go/x509"
 	"github.com/google/go-cmp/cmp"
 )
 

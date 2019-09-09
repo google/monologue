@@ -19,7 +19,6 @@
 package client
 
 import (
-	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -31,6 +30,7 @@ import (
 	"time"
 
 	ct "github.com/google/certificate-transparency-go"
+	"github.com/google/certificate-transparency-go/x509"
 )
 
 // LogClient is a client for a specific CT Log.

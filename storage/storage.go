@@ -18,10 +18,10 @@ package storage
 
 import (
 	"context"
-	"crypto/x509"
 	"time"
 
 	ct "github.com/google/certificate-transparency-go"
+	"github.com/google/certificate-transparency-go/x509"
 	"github.com/google/monologue/apicall"
 	"github.com/google/monologue/ctlog"
 )
