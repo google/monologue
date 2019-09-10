@@ -24,12 +24,8 @@ import (
 	"time"
 
 	ct "github.com/google/certificate-transparency-go"
+	"github.com/google/monologue/interval"
 )
-
-// Interval represents the interval [Start, End).
-type Interval struct {
-	Start, End time.Time
-}
 
 // Log contains metadata about a CT Log that is needed by Monologue.
 type Log struct {
@@ -43,7 +39,7 @@ type Log struct {
 	// Log Operators).
 	// TemporalInterval.Start and TemporalInterval.End are both to second
 	// precision.  Any smaller units may be ignored/discarded.
-	TemporalInterval *Interval
+	TemporalInterval *interval.Interval
 }
 
 // New creates a Log structure, populating the fields appropriately.
@@ -53,17 +49,17 @@ type Log struct {
 // TODO(katjoyce): replace this implementation with something less hacky that
 // takes log details from a log list struct based on the new Log list JSON
 // schema.
-func New(url, name, b64PubKey string, mmd time.Duration, interval *Interval) (*Log, error) {
+func New(url, name, b64PubKey string, mmd time.Duration, i *interval.Interval) (*Log, error) {
 	pk, err := ct.PublicKeyFromB64(b64PubKey)
 	if err != nil {
 		return nil, fmt.Errorf("ct.PublicKeyFromB64(): %s", err)
 	}
 
-	var ti *Interval
-	if interval != nil {
-		ti = &Interval{
-			Start: interval.Start.Truncate(time.Second),
-			End:   interval.End.Truncate(time.Second),
+	var ti *interval.Interval
+	if i != nil {
+		ti = &interval.Interval{
+			Start: i.Start.Truncate(time.Second),
+			End:   i.End.Truncate(time.Second),
 		}
 	}
 
