@@ -1,6 +1,10 @@
 # Certificate Transparency Log Monitor
 
 [![Build Status](https://travis-ci.org/google/monologue.svg?branch=master)](https://travis-ci.org/google/monologue)
+[![Go Report Card](https://goreportcard.com/badge/github.com/google/monologue)](https://goreportcard.com/report/github.com/google/monologue)
+[![GolangCI](https://golangci.com/badges/github.com/google/monologue.svg)](https://golangci.com/r/github.com/google/monologue)
+[![codecov.io](http://codecov.io/github/google/monologue/coverage.svg)](http://codecov.io/github/google/monologue)
+[![GoDoc](https://godoc.org/github.com/google/monologue?status.svg)](https://godoc.org/github.com/google/monologue)
 
 This repository contains the source code for the monitor that checks that
 Certificate Transparency Logs are complying with [RFC 6962](https://tools.ietf.org/html/rfc6962)
