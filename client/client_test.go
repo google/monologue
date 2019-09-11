@@ -314,7 +314,7 @@ func TestGetSTH(t *testing.T) {
 				t.Errorf("GetSTH(): error was of type %v, want %v", gotErrType, test.wantErrType)
 			}
 			if gotHTTPData == nil {
-				t.Fatal("GetSTH() = nil, _, want an HTTPData containing at least the timing of the request")
+				t.Fatal("GetSTH() = (_, nil, _), want an HTTPData containing at least the timing of the request")
 			}
 			if gotHTTPData.Timing.Start.IsZero() || gotHTTPData.Timing.End.IsZero() {
 				t.Errorf("GetSTH(): HTTPData.Timing = %+v, want the Timing to be populated with the timing of the request", gotHTTPData.Timing)
