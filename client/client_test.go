@@ -311,7 +311,7 @@ func TestGetSTH(t *testing.T) {
 
 			gotSTH, gotHTTPData, gotErr := lc.GetSTH()
 			if gotErrType := reflect.TypeOf(gotErr); gotErrType != test.wantErrType {
-				t.Fatalf("GetSTH(): error was of type %v, want %v", gotErrType, test.wantErrType)
+				t.Errorf("GetSTH(): error was of type %v, want %v", gotErrType, test.wantErrType)
 			}
 			if gotHTTPData == nil {
 				t.Fatal("GetSTH() = nil, _, want an HTTPData containing at least the timing of the request")
