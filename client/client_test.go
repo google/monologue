@@ -110,7 +110,7 @@ func fakeServer(statusCode int, body []byte) *httptest.Server {
 	}))
 }
 
-var sth = "{\"tree_size\":344104340,\"timestamp\":1534165797863,\"sha256_root_hash\":\"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=\",\"tree_head_signature\":\"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8=\"}"
+var sth = `{"tree_size":344104340,"timestamp":1534165797863,"sha256_root_hash":"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=","tree_head_signature":"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="}`
 
 // TODO(katjoyce): Improve these tests - try to find a way to test for all error
 // types that could be returned by Get.
@@ -230,7 +230,11 @@ func mustB64Decode(s string) []byte {
 }
 
 func TestGetSTH(t *testing.T) {
-	sthShortRootHash := "{\"tree_size\":344104340,\"timestamp\":1534165797863,\"sha256_root_hash\":\"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJx\",\"tree_head_signature\":\"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8=\"}"
+	sthMissingTreeSize := `{"timestamp":1534165797863,"sha256_root_hash":"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=","tree_head_signature":"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="}`
+	sthMissingTimestamp := `{"tree_size":344104340,"sha256_root_hash":"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=","tree_head_signature":"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="}`
+	sthMissingRootHash := `{"tree_size":344104340,"timestamp":1534165797863,"tree_head_signature":"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="}`
+	sthMissingSignature := `{"tree_size":344104340,"timestamp":1534165797863,"sha256_root_hash":"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU="}`
+	sthShortRootHash := `{"tree_size":344104340,"timestamp":1534165797863,"sha256_root_hash":"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJx","tree_head_signature":"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="}`
 
 	tests := []struct {
 		name        string
@@ -257,7 +261,43 @@ func TestGetSTH(t *testing.T) {
 			wantErrType: reflect.TypeOf(&JSONParseError{}),
 		},
 		{
-			name:        "Response To Struct Error",
+			name:       "STH missing tree size",
+			statusCode: http.StatusOK,
+			body:       []byte(sthMissingTreeSize),
+			// TODO(RJPercival): Return error for missing tree_size
+			wantSTH: &ct.GetSTHResponse{
+				TreeSize:          0,
+				Timestamp:         1534165797863,
+				SHA256RootHash:    mustB64Decode("ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU="),
+				TreeHeadSignature: mustB64Decode("BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="),
+			},
+		},
+		{
+			name:       "STH missing timestamp",
+			statusCode: http.StatusOK,
+			body:       []byte(sthMissingTimestamp),
+			// TODO(RJPercival): Return error for missing timestamp
+			wantSTH: &ct.GetSTHResponse{
+				TreeSize:          344104340,
+				Timestamp:         0,
+				SHA256RootHash:    mustB64Decode("ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU="),
+				TreeHeadSignature: mustB64Decode("BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="),
+			},
+		},
+		{
+			name:        "STH missing root hash",
+			statusCode:  http.StatusOK,
+			body:        []byte(sthMissingRootHash),
+			wantErrType: reflect.TypeOf(&ResponseToStructError{}),
+		},
+		{
+			name:        "STH missing signature",
+			statusCode:  http.StatusOK,
+			body:        []byte(sthMissingSignature),
+			wantErrType: reflect.TypeOf(&ResponseToStructError{}),
+		},
+		{
+			name:        "STH missing end of root hash",
 			statusCode:  http.StatusOK,
 			body:        []byte(sthShortRootHash),
 			wantErrType: reflect.TypeOf(&ResponseToStructError{}),
@@ -288,7 +328,7 @@ func TestGetSTH(t *testing.T) {
 				t.Errorf("GetSTH(): error was of type %v, want %v", gotErrType, test.wantErrType)
 			}
 			if gotHTTPData == nil {
-				t.Fatal("GetSTH() = nil, _, want an HTTPData containing at least the timing of the request")
+				t.Fatal("GetSTH() = (_, nil, _), want an HTTPData containing at least the timing of the request")
 			}
 			if gotHTTPData.Timing.Start.IsZero() || gotHTTPData.Timing.End.IsZero() {
 				t.Errorf("GetSTH(): HTTPData.Timing = %+v, want the Timing to be populated with the timing of the request", gotHTTPData.Timing)
