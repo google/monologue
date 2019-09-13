@@ -46,6 +46,7 @@ func Run(ctx context.Context, lc *client.LogClient, st Storage, l *ctlog.Log, pe
 		roots, receivedAt, err := getRoots(ctx, lc, st, l)
 		if err != nil {
 			glog.Errorf("%s: %s: %s", l.URL, logStr, err)
+			return
 		}
 		if err := st.WriteRoots(ctx, l, roots, receivedAt); err != nil {
 			glog.Errorf("%s: %s: %s", l.URL, logStr, err)
