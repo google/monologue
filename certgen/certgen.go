@@ -32,6 +32,11 @@ import (
 	"github.com/google/monologue/interval"
 )
 
+const (
+	keySize      = 2048
+	certValidity = time.Hour * 24
+)
+
 var timeNowUTC = func() time.Time {
 	return time.Now().UTC()
 }
@@ -72,7 +77,8 @@ type CA struct {
 // in the RootCert and RootKey fields of the CA, and configured using the
 // CertConfig in the CA.
 func (ca *CA) IssueCertificate() (*x509.Certificate, error) {
-	key, err := rsa.GenerateKey(crand.Reader, 2048)
+	// TODO(katjoyce): Make the type of key generated configurable.
+	key, err := rsa.GenerateKey(crand.Reader, keySize)
 	if err != nil {
 		return nil, fmt.Errorf("error generating key pair: %s", err)
 	}
@@ -112,7 +118,7 @@ func leafTemplate(c CertificateConfig) (*x509.Certificate, error) {
 			Locality:           []string{c.SubjectLocality},
 			CommonName:         c.SubjectCommonName,
 		},
-		NotBefore:          notAfter.Add(-time.Hour * 24),
+		NotBefore:          notAfter.Add(-certValidity),
 		NotAfter:           notAfter,
 		SignatureAlgorithm: c.SignatureAlgorithm,
 
@@ -125,13 +131,14 @@ func leafTemplate(c CertificateConfig) (*x509.Certificate, error) {
 }
 
 func randSerialNumber() (*big.Int, error) {
-	return crand.Int(crand.Reader, big.NewInt(math.MaxInt64))
+	i := big.NewInt(0)
+	return crand.Int(crand.Reader, i.SetUint64(math.MaxUint64))
 }
 
 func randNotAfter(notAfterInterval *interval.Interval) time.Time {
 	if notAfterInterval == nil {
 		// TODO(katjoyce): Make this random.
-		return timeNowUTC().Add(time.Hour * 24)
+		return timeNowUTC().Add(certValidity)
 	}
 
 	rand.Seed(timeNowUTC().UnixNano())

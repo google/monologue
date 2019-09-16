@@ -148,8 +148,8 @@ func TestIssueCertificate(t *testing.T) {
 			if cert.NotBefore.IsZero() {
 				t.Error("certificate NotBefore is the zero time")
 			}
-			if want := cert.NotAfter.Add(time.Hour * -24); want != cert.NotBefore {
-				t.Errorf("certificate NotBefore = %s, want %s (24 hours before Not After)", cert.NotBefore, want)
+			if want := cert.NotAfter.Add(-certValidity); want != cert.NotBefore {
+				t.Errorf("certificate NotBefore = %s, want %s (%s before Not After)", cert.NotBefore, want, certValidity)
 			}
 			if cert.NotAfter.IsZero() {
 				t.Error("certificate NotAfter is the zero time")
