@@ -39,5 +39,23 @@ type STHWriter interface {
 
 // RootsWriter is an interface for storing root certificates retrieved from a CT get-roots call.
 type RootsWriter interface {
+	// WriteRoots stores the fact that the given roots were received from a particular CT Log at the specified time.
+	// It will remove any duplicate certificates from roots before storing them.
 	WriteRoots(ctx context.Context, l *ctlog.Log, roots []*x509.Certificate, receivedAt time.Time) error
+}
+
+// RootSetID uniquely identifies a specific set of certificates, regardless of their order.
+type RootSetID string
+
+// RootsReader is an interface for reading root certificates retrieved from an earlier CT get-roots call.
+type RootsReader interface {
+	// WatchRoots monitors storage for get-roots responses and communicates their content to the caller.
+	// A unique, deterministic identifier is generated for any set of root certificates (a RootSetID);
+	// this will be sent over the channel and can be used to lookup further information about that set.
+	// WatchRoots will immediately send the latest RootSetID when it is first called.
+	WatchRoots(ctx context.Context, l *ctlog.Log) (<-chan RootSetID, error)
+
+	// ReadRoots returns the root certificates that make up a particular RootSet,
+	// i.e. the set of certificates returned by a CT get-roots call.
+	ReadRoots(ctx context.Context, rootSet RootSetID) ([]*x509.Certificate, error)
 }
