@@ -457,3 +457,114 @@ func TestGetRoots(t *testing.T) {
 		})
 	}
 }
+
+var sct = `{"sct_version":0,"id":"pLkJkLQYWBSHuxOizGdwCjw1mAT5G9+443fNDsgN3BA=","timestamp":1540646752089,"signature":"BAMASDBGAiEAvMnL6h87Dn/4L594jJbSRrxfB8mrqGQHZyr/aSFs0cECIQDEmUhHaoJr4MyBbGfXXJpe3esA8NaP7Y5XRUUnBkTQAQ=="}`
+
+// TODO(katjoyce): Improve these tests - try to find a way to test for all error
+// types that could be returned by Post.
+func TestPost(t *testing.T) {
+	tests := []struct {
+		name        string
+		url         string
+		statusCode  int
+		rspBody     []byte
+		wantErrType reflect.Type
+	}{
+		{
+			name:        "post error",
+			url:         "not-a-real-url",
+			wantErrType: reflect.TypeOf(&PostError{}),
+		},
+		{
+			name:        "HTTP status error",
+			statusCode:  http.StatusNotFound,
+			wantErrType: reflect.TypeOf(&HTTPStatusError{}),
+		},
+		{
+			name:       "no error",
+			statusCode: http.StatusOK,
+			rspBody:    []byte(sct),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s := fakeServer(test.statusCode, test.rspBody)
+			lc := New(s.URL, &http.Client{})
+			if test.url != "" {
+				lc = New(test.url, &http.Client{})
+			}
+
+			got, gotErr := lc.post("", nil)
+			if gotErrType := reflect.TypeOf(gotErr); gotErrType != test.wantErrType {
+				t.Errorf("Post(_, _): error was of type %v, want %v", gotErrType, test.wantErrType)
+			}
+			if got == nil {
+				t.Fatal("Post(_, _) = nil, _, want an HTTPData containing at least the timing of the request")
+			}
+			if got.Timing.Start.IsZero() || got.Timing.End.IsZero() {
+				t.Errorf("Post(_, _): HTTPData.Timing = %+v, want the Timing to be populated with the timing of the request", got.Timing)
+			}
+			if !bytes.Equal(got.Body, test.rspBody) {
+				t.Errorf("Post(_, _): HTTPData.Body = %s, want %s", got.Body, test.rspBody)
+			}
+		})
+	}
+}
+
+func TestPostAndParse(t *testing.T) {
+	tests := []struct {
+		name        string
+		url         string
+		statusCode  int
+		rspBody     []byte
+		wantErrType reflect.Type
+	}{
+		{
+			name:        "get error",
+			url:         "not-a-real-url",
+			wantErrType: reflect.TypeOf(&PostError{}),
+		},
+		{
+			name:        "HTTP status error",
+			statusCode:  http.StatusNotFound,
+			wantErrType: reflect.TypeOf(&HTTPStatusError{}),
+		},
+		{
+			name:        "JSON Parse Error",
+			statusCode:  http.StatusOK,
+			rspBody:     []byte("not-valid-json"),
+			wantErrType: reflect.TypeOf(&JSONParseError{}),
+		},
+		{
+			name:       "no error",
+			statusCode: http.StatusOK,
+			rspBody:    []byte(sct),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s := fakeServer(test.statusCode, test.rspBody)
+			lc := New(s.URL, &http.Client{})
+			if test.url != "" {
+				lc = New(test.url, &http.Client{})
+			}
+
+			var resp ct.AddChainResponse
+			got, gotErr := lc.postAndParse("", nil, &resp)
+			if gotErrType := reflect.TypeOf(gotErr); gotErrType != test.wantErrType {
+				t.Errorf("PostAndParse(_, _): error was of type %v, want %v", gotErrType, test.wantErrType)
+			}
+			if got == nil {
+				t.Fatal("PostAndParse(_, _) = nil, _, want an HTTPData containing at least the timing of the request")
+			}
+			if got.Timing.Start.IsZero() || got.Timing.End.IsZero() {
+				t.Errorf("PostAndParse(_, _): HTTPData.Timing = %+v, want the Timing to be populated with the timing of the request", got.Timing)
+			}
+			if !bytes.Equal(got.Body, test.rspBody) {
+				t.Errorf("PostAndParse(_, _): HTTPData.Body = %s, want %s", got.Body, test.rspBody)
+			}
+		})
+	}
+}

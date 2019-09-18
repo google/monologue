@@ -19,6 +19,7 @@
 package client
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -32,6 +33,8 @@ import (
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/certificate-transparency-go/x509"
 )
+
+const contentType = "application/json"
 
 // LogClient is a client for a specific CT Log.
 //
@@ -243,4 +246,50 @@ func parseCertificate(b64 string) (*x509.Certificate, error) {
 	}
 
 	return x509.ParseCertificate(certDER)
+}
+
+// post makes an HTTP POST call to path on the server at lc.url, sending the
+// body provided.
+func (lc *LogClient) post(path string, body []byte) (*HTTPData, error) {
+	httpData := &HTTPData{Timing: Timing{}}
+
+	fullURL := buildURL(lc.url, path, nil)
+	httpData.Timing.Start = time.Now().UTC()
+	resp, err := lc.httpClient.Post(fullURL, contentType, bytes.NewReader(body))
+	httpData.Timing.End = time.Now().UTC()
+	if err != nil {
+		return httpData, &PostError{URL: fullURL, ContentType: contentType, Body: body, Err: err}
+	}
+
+	// For the purposes of CT Logs, there should always be a response.
+	if resp == nil {
+		return httpData, &NilResponseError{URL: fullURL}
+	}
+	httpData.Response = resp
+
+	rspBody, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		return httpData, &BodyReadError{URL: fullURL, Err: err}
+	}
+	httpData.Body = rspBody
+
+	if resp.StatusCode != http.StatusOK {
+		return httpData, &HTTPStatusError{StatusCode: resp.StatusCode}
+	}
+
+	return httpData, nil
+}
+
+// postAndParse calls post() (see above) and then attempts to parse the JSON
+// response body into rsp.
+func (lc *LogClient) postAndParse(path string, body []byte, rsp interface{}) (*HTTPData, error) {
+	httpData, err := lc.post(path, body)
+	if err != nil {
+		return httpData, err
+	}
+	if err = json.Unmarshal(httpData.Body, rsp); err != nil {
+		return httpData, &JSONParseError{Data: httpData.Body, Err: err}
+	}
+	return httpData, nil
 }
