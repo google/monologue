@@ -109,7 +109,7 @@ func TestIssueCertificate(t *testing.T) {
 					SubjectLocality:           subjectLocality,
 					SubjectCountry:            subjectCountry,
 					SignatureAlgorithm:        signatureAlgorithm,
-					Prefix:                    prefix,
+					DNSPrefix:                 prefix,
 					NotAfterInterval:          test.notAfterInterval,
 				},
 			}
@@ -175,7 +175,7 @@ func TestIssueCertificate(t *testing.T) {
 				t.Errorf("certificate IsCA = %t, want false", cert.IsCA)
 			}
 
-			want := []string{cc.SubjectCommonName, extendedDNSSAN(cc.Prefix, cc.SubjectCommonName)}
+			want := []string{cc.SubjectCommonName, extendedDNSSAN(cc.DNSPrefix, cc.SubjectCommonName)}
 			if !cmp.Equal(cert.DNSNames, want) {
 				t.Errorf("certificate DNSNames = %v, want %v", cert.DNSNames, want)
 			}
@@ -220,13 +220,13 @@ func TestExtendedDNSSAN(t *testing.T) {
 			desc:   "prefix",
 			prefix: "google-pilot",
 			url:    "flowers-to-the-world.com",
-			want:   "12.25.march.2019.google-pilot.flowers-to-the-world.com",
+			want:   "12.25.03.2019.google-pilot.flowers-to-the-world.com",
 		},
 		{
 			desc:   "empty prefix",
 			prefix: "",
 			url:    "flowers-to-the-world.com",
-			want:   "12.25.march.2019.flowers-to-the-world.com",
+			want:   "12.25.03.2019.flowers-to-the-world.com",
 		},
 	}
 

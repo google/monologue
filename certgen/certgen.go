@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	keySize      = 2048
+	keySizeBits  = 2048
 	certValidity = time.Hour * 24
 )
 
@@ -57,16 +57,23 @@ type CertificateConfig struct {
 
 	// Optional fields
 
-	// Prefix is a prefix that will be used in conjunction with the
+	// DNSPrefix is a prefix that will be used in conjunction with the
 	// SubjectCommonName to create a more specific DNS SAN.
-	Prefix string
+	DNSPrefix string
 	// NotAfterInterval specifies an interval in which the NotAfter time of a
 	// certificate must fall.
+	//
+	// For example, if a certificate is being generated to be submitted to a
+	// temporal CT Log shard, then, in order to be accepted by the Log, its
+	// NotAfter value must fall within the Log's temporal range, so this field
+	// would be set to the temporal interval of the Log.  However, if a
+	// certificate is being generated to be submitted to a non-temporal CT Log,
+	// this field should be left unset/set to nil.
 	NotAfterInterval *interval.Interval
 }
 
-// CA is a Certificate Authority that issues synthetic certificates and
-// certificate chains using its RootCert and RootKey.
+// CA is a Certificate Authority that issues certificates and certificate chains
+// using its RootCert and RootKey.
 type CA struct {
 	RootCert   *x509.Certificate
 	RootKey    crypto.Signer
@@ -77,8 +84,7 @@ type CA struct {
 // in the RootCert and RootKey fields of the CA, and configured using the
 // CertConfig in the CA.
 func (ca *CA) IssueCertificate() (*x509.Certificate, error) {
-	// TODO(katjoyce): Make the type of key generated configurable.
-	key, err := rsa.GenerateKey(crand.Reader, keySize)
+	key, err := rsa.GenerateKey(crand.Reader, keySizeBits)
 	if err != nil {
 		return nil, fmt.Errorf("error generating key pair: %s", err)
 	}
@@ -126,7 +132,7 @@ func leafTemplate(c CertificateConfig) (*x509.Certificate, error) {
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 		IsCA:                  false,
-		DNSNames:              []string{c.SubjectCommonName, extendedDNSSAN(c.Prefix, c.SubjectCommonName)},
+		DNSNames:              []string{c.SubjectCommonName, extendedDNSSAN(c.DNSPrefix, c.SubjectCommonName)},
 	}, nil
 }
 
@@ -143,6 +149,7 @@ func randNotAfter(notAfterInterval *interval.Interval) time.Time {
 
 	rand.Seed(timeNowUTC().UnixNano())
 
+	// Calculate a NotAfter value at a random time within the notAfterInterval.
 	start := notAfterInterval.Start.Unix()
 	end := notAfterInterval.End.Unix()
 	delta := end - start
@@ -153,14 +160,14 @@ func randNotAfter(notAfterInterval *interval.Interval) time.Time {
 // extendedDNSSAN creates a string to be used in the DNSNames SAN.  The string
 // created is or the format <hour>.<day>.<month>.<year>.<prefix>.<url> where the
 // time elements are based on the time now.  For example, if
-// extendedDNSSAN(abc, xyz) was called at 2019-03-25 12:00 UTC, it would return
-// 12.25.march.2019.abc.xyz
+// extendedDNSSAN(squirrel, example.com) was called at 2019-03-25 12:00 UTC, it
+// would return 12.25.03.2019.squirrel.example.com
 func extendedDNSSAN(prefix string, url string) string {
 	now := timeNowUTC()
 	dns := []string{
-		strconv.Itoa(now.Hour()),
-		strconv.Itoa(now.Day()),
-		strings.ToLower(now.Month().String()),
+		fmt.Sprintf("%02d", now.Hour()),
+		fmt.Sprintf("%02d", now.Day()),
+		fmt.Sprintf("%02d", int(now.Month())),
 		strconv.Itoa(now.Year()),
 	}
 	if prefix != "" {
