@@ -18,14 +18,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/monologue/interval"
 	"github.com/kylelemons/godebug/pretty"
 )
 
 func TestNewTemporalInterval(t *testing.T) {
 	tests := []struct {
 		desc     string
-		interval *Interval
-		want     *Interval
+		interval *interval.Interval
+		want     *interval.Interval
 	}{
 		{
 			desc:     "nil interval",
@@ -34,22 +35,22 @@ func TestNewTemporalInterval(t *testing.T) {
 		},
 		{
 			desc: "strip nanos",
-			interval: &Interval{
+			interval: &interval.Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 1, time.UTC),
 				End:   time.Date(2019, time.March, 25, 23, 59, 59, 999999999, time.UTC),
 			},
-			want: &Interval{
+			want: &interval.Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
 				End:   time.Date(2019, time.March, 25, 23, 59, 59, 0, time.UTC),
 			},
 		},
 		{
 			desc: "no nanos",
-			interval: &Interval{
+			interval: &interval.Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
 				End:   time.Date(2019, time.March, 25, 23, 59, 59, 0, time.UTC),
 			},
-			want: &Interval{
+			want: &interval.Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
 				End:   time.Date(2019, time.March, 25, 23, 59, 59, 0, time.UTC),
 			},
