@@ -210,16 +210,16 @@ func TestExtendedDNSSAN(t *testing.T) {
 		{
 			desc:    "prefix",
 			timeNow: time.Date(2019, time.March, 25, 12, 0, 0, 0, time.UTC),
-			prefix:  "google-pilot",
-			url:     "flowers-to-the-world.com",
-			want:    "12.25.03.2019.google-pilot.flowers-to-the-world.com",
+			prefix:  "squirrel",
+			url:     "example.com",
+			want:    "12.25.03.2019.squirrel.example.com",
 		},
 		{
 			desc:    "empty prefix",
 			timeNow: time.Date(2019, time.January, 25, 12, 0, 0, 0, time.UTC),
 			prefix:  "",
-			url:     "flowers-to-the-world.com",
-			want:    "12.25.01.2019.flowers-to-the-world.com",
+			url:     "example.com",
+			want:    "12.25.01.2019.example.com",
 		},
 	}
 
