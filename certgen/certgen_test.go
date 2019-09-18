@@ -32,15 +32,17 @@ import (
 const (
 	rootFile    = "./testdata/test_ca.pem"
 	rootKeyFile = "./testdata/test_ca.key"
-
-	subjectCommonName         = "test-leaf-certificate"
-	subjectOrganization       = "Test Organisation"
-	subjectOrganizationalUnit = "Test Organisational Unit"
-	subjectLocality           = "Test Locality"
-	subjectCountry            = "GB"
-	signatureAlgorithm        = x509.SHA256WithRSA
-	prefix                    = "test-log"
 )
+
+var certConfig = CertificateConfig{
+	SubjectCommonName:         "test-leaf-certificate",
+	SubjectOrganization:       "Test Organisation",
+	SubjectOrganizationalUnit: "Test Organisational Unit",
+	SubjectLocality:           "Test Locality",
+	SubjectCountry:            "GB",
+	SignatureAlgorithm:        x509.SHA256WithRSA,
+	DNSPrefix:                 "test-log",
+}
 
 func rootAndKeySetup(rootFile, rootKeyFile string) (*x509.Certificate, crypto.Signer, error) {
 	rootPEM, err := ioutil.ReadFile(rootFile)
@@ -99,20 +101,9 @@ func TestIssueCertificate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			ca := &CA{
-				SigningCert: root,
-				SigningKey:  rootKey,
-				CertConfig: CertificateConfig{
-					SubjectCommonName:         subjectCommonName,
-					SubjectOrganization:       subjectOrganization,
-					SubjectOrganizationalUnit: subjectOrganizationalUnit,
-					SubjectLocality:           subjectLocality,
-					SubjectCountry:            subjectCountry,
-					SignatureAlgorithm:        signatureAlgorithm,
-					DNSPrefix:                 prefix,
-					NotAfterInterval:          test.notAfterInterval,
-				},
-			}
+			cc := certConfig
+			cc.NotAfterInterval = test.notAfterInterval
+			ca := &CA{SigningCert: root, SigningKey: rootKey, CertConfig: cc}
 
 			cert, err := ca.IssueCertificate()
 			if err != nil {
@@ -126,47 +117,46 @@ func TestIssueCertificate(t *testing.T) {
 				t.Error("certificate Serial Number is nil")
 			}
 
-			cc := ca.CertConfig
 			// Check the Subject fields.
-			if want := []string{cc.SubjectCountry}; !cmp.Equal(cert.Subject.Country, want) {
-				t.Errorf("certificate Subject Country = %v, want %v", cert.Subject.Country, want)
+			if got, want := cert.Subject.Country, []string{cc.SubjectCountry}; !cmp.Equal(got, want) {
+				t.Errorf("certificate Subject Country = %v, want %v", got, want)
 			}
-			if want := []string{cc.SubjectOrganization}; !cmp.Equal(cert.Subject.Organization, want) {
-				t.Errorf("certificate Subject Organization = %v, want %v", cert.Subject.Organization, want)
+			if got, want := cert.Subject.Organization, []string{cc.SubjectOrganization}; !cmp.Equal(got, want) {
+				t.Errorf("certificate Subject Organization = %v, want %v", got, want)
 			}
-			if want := []string{cc.SubjectOrganizationalUnit}; !cmp.Equal(cert.Subject.OrganizationalUnit, want) {
-				t.Errorf("certificate Subject OrganizationalUnit = %v, want %v", cert.Subject.OrganizationalUnit, want)
+			if got, want := cert.Subject.OrganizationalUnit, []string{cc.SubjectOrganizationalUnit}; !cmp.Equal(got, want) {
+				t.Errorf("certificate Subject OrganizationalUnit = %v, want %v", got, want)
 			}
-			if want := []string{cc.SubjectLocality}; !cmp.Equal(cert.Subject.Locality, want) {
-				t.Errorf("certificate Subject Locality = %v, want %v", cert.Subject.Locality, want)
+			if got, want := cert.Subject.Locality, []string{cc.SubjectLocality}; !cmp.Equal(got, want) {
+				t.Errorf("certificate Subject Locality = %v, want %v", got, want)
 			}
-			if cert.Subject.CommonName != cc.SubjectCommonName {
-				t.Errorf("certificate Subject Common Name = %s, want %s", cert.Subject.CommonName, cc.SubjectCommonName)
+			if got, want := cert.Subject.CommonName, cc.SubjectCommonName; got != want {
+				t.Errorf("certificate Subject Common Name = %s, want %s", got, want)
 			}
 
 			// Check the validity period fields.
 			if cert.NotBefore.IsZero() {
 				t.Error("certificate NotBefore is the zero time")
 			}
-			if want := cert.NotAfter.Add(-certValidity); want != cert.NotBefore {
-				t.Errorf("certificate NotBefore = %s, want %s (%s before Not After)", cert.NotBefore, want, certValidity)
+			if got, want := cert.NotBefore, cert.NotAfter.Add(-certValidity); got != want {
+				t.Errorf("certificate NotBefore = %s, want %s (%s before Not After)", got, want, certValidity)
 			}
 			if cert.NotAfter.IsZero() {
 				t.Error("certificate NotAfter is the zero time")
 			}
 			if cc.NotAfterInterval != nil {
 				// Check that cert.NotAfter is in the NotAfterInterval [Start, End).
-				if cert.NotAfter.Before(cc.NotAfterInterval.Start) || !cc.NotAfterInterval.End.After(cert.NotAfter) {
-					t.Errorf("certificate NotAfter = %s, should be between [%s, %s)", cert.NotAfter, cc.NotAfterInterval.Start, cc.NotAfterInterval.End)
+				if got := cert.NotAfter; got.Before(cc.NotAfterInterval.Start) || !cc.NotAfterInterval.End.After(got) {
+					t.Errorf("certificate NotAfter = %s, should be between [%s, %s)", got, cc.NotAfterInterval.Start, cc.NotAfterInterval.End)
 				}
 			}
 
 			// Check the extension fields.
-			if cert.KeyUsage != x509.KeyUsageDigitalSignature {
-				t.Errorf("certificate KeyUsage = %d, want %d", cert.KeyUsage, x509.KeyUsageDigitalSignature)
+			if got, want := cert.KeyUsage, x509.KeyUsageDigitalSignature; got != want {
+				t.Errorf("certificate KeyUsage = %d, want %d", got, want)
 			}
-			if want := []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth}; !cmp.Equal(cert.ExtKeyUsage, want) {
-				t.Errorf("certificate ExtKeyUsage = %v, want %v", cert.ExtKeyUsage, want)
+			if got, want := cert.ExtKeyUsage, []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth}; !cmp.Equal(got, want) {
+				t.Errorf("certificate ExtKeyUsage = %v, want %v", got, want)
 			}
 			if !cert.BasicConstraintsValid {
 				t.Errorf("certificate BasicConstraintsValid = %t, want true", cert.BasicConstraintsValid)
@@ -176,29 +166,29 @@ func TestIssueCertificate(t *testing.T) {
 			}
 
 			want := []string{cc.SubjectCommonName, extendedDNSSAN(cc.DNSPrefix, cc.SubjectCommonName)}
-			if !cmp.Equal(cert.DNSNames, want) {
-				t.Errorf("certificate DNSNames = %v, want %v", cert.DNSNames, want)
+			if got := cert.DNSNames; !cmp.Equal(got, want) {
+				t.Errorf("certificate DNSNames = %v, want %v", got, want)
 			}
 
 			// Check any other fields that should have been populated are
 			// present and correct.
 
-			if cert.PublicKeyAlgorithm != x509.RSA {
-				t.Errorf("certificate PublicKeyAlgorithm = %s, want %s", cert.PublicKeyAlgorithm, x509.RSA)
+			if got, want := cert.PublicKeyAlgorithm, x509.RSA; got != want {
+				t.Errorf("certificate PublicKeyAlgorithm = %s, want %s", got, want)
 			}
 			if cert.PublicKey == nil {
 				t.Error("certificate Public Key is nil")
 			}
-			if !cmp.Equal(cert.Issuer, root.Subject) {
-				t.Errorf("certificate Issuer = %v, want %v", cert.Issuer, root.Subject)
+			if got, want := cert.Issuer, root.Subject; !cmp.Equal(got, want) {
+				t.Errorf("certificate Issuer = %v, want %v", got, want)
 			}
-			if !bytes.Equal(cert.AuthorityKeyId, root.SubjectKeyId) {
-				t.Errorf("certificate AuthorityKeyId = %v, want %v", cert.AuthorityKeyId, root.SubjectKeyId)
+			if got, want := cert.AuthorityKeyId, root.SubjectKeyId; !bytes.Equal(got, want) {
+				t.Errorf("certificate AuthorityKeyId = %v, want %v", got, want)
 			}
 
 			// Check the signature algorithm.
-			if cert.SignatureAlgorithm != cc.SignatureAlgorithm {
-				t.Errorf("certificate SignatureAlgorithm = %s, want %s", cert.SignatureAlgorithm, cc.SignatureAlgorithm)
+			if got, want := cert.SignatureAlgorithm, cc.SignatureAlgorithm; got != want {
+				t.Errorf("certificate SignatureAlgorithm = %s, want %s", got, want)
 			}
 
 			// Check the signature is valid.
@@ -211,30 +201,32 @@ func TestIssueCertificate(t *testing.T) {
 
 func TestExtendedDNSSAN(t *testing.T) {
 	tests := []struct {
-		desc   string
-		prefix string
-		url    string
-		want   string
+		desc    string
+		timeNow time.Time
+		prefix  string
+		url     string
+		want    string
 	}{
 		{
-			desc:   "prefix",
-			prefix: "google-pilot",
-			url:    "flowers-to-the-world.com",
-			want:   "12.25.03.2019.google-pilot.flowers-to-the-world.com",
+			desc:    "prefix",
+			timeNow: time.Date(2019, time.March, 25, 12, 0, 0, 0, time.UTC),
+			prefix:  "google-pilot",
+			url:     "flowers-to-the-world.com",
+			want:    "12.25.03.2019.google-pilot.flowers-to-the-world.com",
 		},
 		{
-			desc:   "empty prefix",
-			prefix: "",
-			url:    "flowers-to-the-world.com",
-			want:   "12.25.03.2019.flowers-to-the-world.com",
+			desc:    "empty prefix",
+			timeNow: time.Date(2019, time.January, 25, 12, 0, 0, 0, time.UTC),
+			prefix:  "",
+			url:     "flowers-to-the-world.com",
+			want:    "12.25.01.2019.flowers-to-the-world.com",
 		},
-	}
-
-	timeNowUTC = func() time.Time {
-		return time.Date(2019, time.March, 25, 12, 0, 0, 0, time.UTC)
 	}
 
 	for _, test := range tests {
+		timeNowUTC = func() time.Time {
+			return test.timeNow
+		}
 		if got := extendedDNSSAN(test.prefix, test.url); got != test.want {
 			t.Errorf("%s: extendedDNSSAN(%s, %s) = %s, want %s", test.desc, test.prefix, test.url, got, test.want)
 		}

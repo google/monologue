@@ -143,7 +143,7 @@ func randSerialNumber() (*big.Int, error) {
 
 func randNotAfter(notAfterInterval *interval.Interval) time.Time {
 	if notAfterInterval == nil {
-		// TODO(katjoyce): Make this random.
+		// TODO(katjoyce): Make the value returned for NotAfter random.
 		return timeNowUTC().Add(certValidity)
 	}
 
