@@ -73,15 +73,15 @@ type CertificateConfig struct {
 }
 
 // CA is a Certificate Authority that issues certificates and certificate chains
-// using its RootCert and RootKey.
+// using its SigningCert and SigningKey.
 type CA struct {
-	RootCert   *x509.Certificate
-	RootKey    crypto.Signer
-	CertConfig CertificateConfig
+	SigningCert *x509.Certificate
+	SigningKey  crypto.Signer
+	CertConfig  CertificateConfig
 }
 
 // IssueCertificate creates a new leaf certificate, issued by the root specified
-// in the RootCert and RootKey fields of the CA, and configured using the
+// in the SigningCert and SigningKey fields of the CA, and configured using the
 // CertConfig in the CA.
 func (ca *CA) IssueCertificate() (*x509.Certificate, error) {
 	key, err := rsa.GenerateKey(crand.Reader, keySizeBits)
@@ -94,7 +94,7 @@ func (ca *CA) IssueCertificate() (*x509.Certificate, error) {
 		return nil, fmt.Errorf("error creating leaf template: %s", err)
 	}
 
-	leafDER, err := x509.CreateCertificate(crand.Reader, template, ca.RootCert, key.Public(), ca.RootKey)
+	leafDER, err := x509.CreateCertificate(crand.Reader, template, ca.SigningCert, key.Public(), ca.SigningKey)
 	if err != nil {
 		return nil, fmt.Errorf("error creating leaf certificate: %s", err)
 	}

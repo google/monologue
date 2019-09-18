@@ -100,8 +100,8 @@ func TestIssueCertificate(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ca := &CA{
-				RootCert: root,
-				RootKey:  rootKey,
+				SigningCert: root,
+				SigningKey:  rootKey,
 				CertConfig: CertificateConfig{
 					SubjectCommonName:         subjectCommonName,
 					SubjectOrganization:       subjectOrganization,
