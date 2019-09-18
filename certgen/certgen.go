@@ -80,7 +80,7 @@ type CA struct {
 	CertConfig  CertificateConfig
 }
 
-// IssueCertificate creates a new leaf certificate, issued by the root specified
+// IssueCertificate creates a new leaf certificate, issued by the key specified
 // in the SigningCert and SigningKey fields of the CA, and configured using the
 // CertConfig in the CA.
 func (ca *CA) IssueCertificate() (*x509.Certificate, error) {
