@@ -22,38 +22,38 @@ import (
 func TestRandomSecond(t *testing.T) {
 	tests := []struct {
 		desc     string
-		iv       *Interval
+		in       *Interval
 		wantZero bool
 	}{
 		{
 			desc:     "nil",
-			iv:       nil,
+			in:       nil,
 			wantZero: true,
 		},
 		{
 			desc: "day",
-			iv: &Interval{
+			in: &Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
 				End:   time.Date(2019, time.March, 26, 0, 0, 0, 0, time.UTC),
 			},
 		},
 		{
 			desc: "second",
-			iv: &Interval{
+			in: &Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
 				End:   time.Date(2019, time.March, 25, 0, 0, 1, 0, time.UTC),
 			},
 		},
 		{
 			desc: "nanosecond",
-			iv: &Interval{
+			in: &Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
 				End:   time.Date(2019, time.March, 25, 0, 0, 0, 1, time.UTC),
 			},
 		},
 		{
 			desc: "nanosecond - no second",
-			iv: &Interval{
+			in: &Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 5000, time.UTC),
 				End:   time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
 			},
@@ -61,7 +61,7 @@ func TestRandomSecond(t *testing.T) {
 		},
 		{
 			desc: "equal",
-			iv: &Interval{
+			in: &Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
 				End:   time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
 			},
@@ -69,7 +69,7 @@ func TestRandomSecond(t *testing.T) {
 		},
 		{
 			desc: "end just before start",
-			iv: &Interval{
+			in: &Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 1, time.UTC),
 				End:   time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
 			},
@@ -77,7 +77,7 @@ func TestRandomSecond(t *testing.T) {
 		},
 		{
 			desc: "end before start",
-			iv: &Interval{
+			in: &Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
 				End:   time.Date(2019, time.March, 24, 0, 0, 0, 0, time.UTC),
 			},
@@ -87,17 +87,17 @@ func TestRandomSecond(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got := test.iv.RandomSecond()
+			got := test.in.RandomSecond()
 
 			if test.wantZero {
 				if !got.IsZero() {
-					t.Fatalf("%v.RandomSecond() = %s, want %s (the zero time)", test.iv, got, time.Time{})
+					t.Fatalf("%v.RandomSecond() = %s, want %s (the zero time)", test.in, got, time.Time{})
 				}
 				return
 			}
 
-			if got.Before(test.iv.Start) || !test.iv.End.After(got) {
-				t.Fatalf("%v.RandomSecond() = %s, want between [%s, %s)", test.iv, got, test.iv.Start, test.iv.End)
+			if got.Before(test.in.Start) || !test.in.End.After(got) {
+				t.Fatalf("%v.RandomSecond() = %s, want between [%s, %s)", test.in, got, test.in.Start, test.in.End)
 			}
 		})
 	}
