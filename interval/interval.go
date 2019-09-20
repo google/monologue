@@ -25,12 +25,24 @@ type Interval struct {
 	Start, End time.Time
 }
 
-// RandomInstant returns a random time (to second precision) that falls within
-// the Interval.
+// RandomSecond returns a random second-precision time that falls within the
+// Interval.
 //
-// If the Interval is nil, or Interval.End <= Interval.Start, the zero value
-// time.Time will be returned.
-func (i *Interval) RandomInstant() time.Time {
+// If there is no second-precision time that falls in the Interval, the zero
+// value time.Time will be returned.
+// For example:
+//    Start = 2019-03-25 00:00:00.1 +0000 UTC
+//    End = 2019-03-25 00:00:00.9 +0000 UTC
+//
+// If Interval.End == Interval.Start, the zero value time.Time will be returned.
+// This is because an Interval represents the interval
+// [Interval.Start, Interval.End), so if Interval.Start and Interval.End are
+// equal, the interval is invalid.
+//
+// If Interval.End < Interval.Start, the zero value time.Time will be returned.
+//
+// If the Interval is nil, the zero value time.Time will be returned.
+func (i *Interval) RandomSecond() time.Time {
 	if i == nil {
 		return time.Time{}
 	}
@@ -43,8 +55,15 @@ func (i *Interval) RandomInstant() time.Time {
 	end := i.End.Unix()
 	delta := end - start
 
+	// If delta == 0 there is less than 1 second between i.Start and i.End.
 	if delta == 0 {
-		return i.Start
+		// If there is a second-precision time between i.Start and i.End,
+		// return that.
+		if t := time.Unix(end, 0); !t.Before(i.Start) {
+			return t
+		}
+		// If not, return the zero time.
+		return time.Time{}
 	}
 
 	rand.Seed(time.Now().UnixNano())

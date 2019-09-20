@@ -19,7 +19,7 @@ import (
 	"time"
 )
 
-func TestRandomInstant(t *testing.T) {
+func TestRandomSecond(t *testing.T) {
 	tests := []struct {
 		desc     string
 		iv       *Interval
@@ -52,6 +52,14 @@ func TestRandomInstant(t *testing.T) {
 			},
 		},
 		{
+			desc: "nanosecond - no second",
+			iv: &Interval{
+				Start: time.Date(2019, time.March, 25, 0, 0, 0, 5000, time.UTC),
+				End:   time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
+			},
+			wantZero: true,
+		},
+		{
 			desc: "equal",
 			iv: &Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
@@ -79,17 +87,17 @@ func TestRandomInstant(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got := test.iv.RandomInstant()
+			got := test.iv.RandomSecond()
 
 			if test.wantZero {
 				if !got.IsZero() {
-					t.Fatalf("%v.RandomInstant() = %s, want %s (the zero time)", test.iv, got, time.Time{})
+					t.Fatalf("%v.RandomSecond() = %s, want %s (the zero time)", test.iv, got, time.Time{})
 				}
 				return
 			}
 
 			if got.Before(test.iv.Start) || !test.iv.End.After(got) {
-				t.Fatalf("%v.RandomInstant() = %s, want between [%s, %s)", test.iv, got, test.iv.Start, test.iv.End)
+				t.Fatalf("%v.RandomSecond() = %s, want between [%s, %s)", test.iv, got, test.iv.Start, test.iv.End)
 			}
 		})
 	}

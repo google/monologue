@@ -114,7 +114,7 @@ func leafTemplate(c CertificateConfig) (*x509.Certificate, error) {
 
 	notAfter := timeNowUTC().Add(certValidity)
 	if c.NotAfterInterval != nil {
-		notAfter = c.NotAfterInterval.RandomInstant()
+		notAfter = c.NotAfterInterval.RandomSecond()
 	}
 
 	return &x509.Certificate{
