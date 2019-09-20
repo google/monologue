@@ -65,8 +65,8 @@ func (i *Interval) RandomSecond() time.Time {
 
 	delta := end - start
 
-	// If delta == 0 there are no second boundaries between i.Start and i.End.
-	// Return the zero time.
+	// If delta == 0 there are no second boundaries in [i.Start, i.End). Return
+	// the zero time.
 	//
 	// For example:
 	//    Start = 2019-03-25 00:00:00.1 +0000 UTC
