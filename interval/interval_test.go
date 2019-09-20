@@ -45,21 +45,21 @@ func TestRandomSecond(t *testing.T) {
 			},
 		},
 		{
-			desc: "one whole second between - delta = 0",
+			desc: "one second boundary between",
 			in: &Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 999999999, time.UTC),
 				End:   time.Date(2019, time.March, 25, 0, 0, 1, 1, time.UTC),
 			},
 		},
 		{
-			desc: "one whole second between, start boundary",
+			desc: "one second boundary between, start on second boundary",
 			in: &Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
 				End:   time.Date(2019, time.March, 25, 0, 0, 0, 1, time.UTC),
 			},
 		},
 		{
-			desc: "no whole seconds between - delta < 0",
+			desc: "no second boundaries between",
 			in: &Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 1, time.UTC),
 				End:   time.Date(2019, time.March, 25, 0, 0, 0, 999999999, time.UTC),
@@ -67,10 +67,10 @@ func TestRandomSecond(t *testing.T) {
 			wantZero: true,
 		},
 		{
-			desc: "no whole seconds between, end boundary",
+			desc: "no second boundaries between, end on second boundary",
 			in: &Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 1, time.UTC),
-				End:   time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
+				End:   time.Date(2019, time.March, 25, 0, 0, 1, 0, time.UTC),
 			},
 			wantZero: true,
 		},
