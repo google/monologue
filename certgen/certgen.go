@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"math"
 	"math/big"
-	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -113,7 +112,10 @@ func leafTemplate(c CertificateConfig) (*x509.Certificate, error) {
 		return nil, err
 	}
 
-	notAfter := randNotAfter(c.NotAfterInterval)
+	notAfter := timeNowUTC().Add(certValidity)
+	if c.NotAfterInterval != nil {
+		notAfter = c.NotAfterInterval.RandomInstant()
+	}
 
 	return &x509.Certificate{
 		SerialNumber: sn,
@@ -139,22 +141,6 @@ func leafTemplate(c CertificateConfig) (*x509.Certificate, error) {
 func randSerialNumber() (*big.Int, error) {
 	i := big.NewInt(0)
 	return crand.Int(crand.Reader, i.SetUint64(math.MaxUint64))
-}
-
-func randNotAfter(notAfterInterval *interval.Interval) time.Time {
-	if notAfterInterval == nil {
-		// TODO(katjoyce): Make the value returned for NotAfter random.
-		return timeNowUTC().Add(certValidity)
-	}
-
-	rand.Seed(timeNowUTC().UnixNano())
-
-	// Calculate a NotAfter value at a random time within the notAfterInterval.
-	start := notAfterInterval.Start.Unix()
-	end := notAfterInterval.End.Unix()
-	delta := end - start
-
-	return time.Unix(start+rand.Int63n(delta), 0)
 }
 
 // extendedDNSSAN creates a string to be used in the DNSNames SAN.  The string
