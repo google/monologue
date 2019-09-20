@@ -75,8 +75,8 @@ func (i *Interval) RandomSecond() time.Time {
 		return time.Time{}
 	}
 
-	// Otherwise, there is at least one second boundary between i.Start and
-	// i.End. Randomly choose one of them, and return it.
+	// Otherwise, there is at least one second boundary in [i.Start, i.End).
+	// Randomly choose one of them, and return it.
 	rand.Seed(time.Now().UnixNano())
 	return time.Unix(start+rand.Int63n(delta), 0)
 }
