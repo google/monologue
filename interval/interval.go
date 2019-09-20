@@ -47,25 +47,40 @@ func (i *Interval) RandomSecond() time.Time {
 		return time.Time{}
 	}
 
-	if i.Start.Equal(i.End) || i.Start.After(i.End) {
+	if !i.Start.Before(i.End) {
 		return time.Time{}
 	}
 
+	// Set start to be the first whole second >= i.Start.
 	start := i.Start.Unix()
-	end := i.End.Unix()
-	delta := end - start
+	if i.Start.Nanosecond() != 0 {
+		start++
+	}
 
-	// If delta == 0 there is less than 1 second between i.Start and i.End.
+	// Set end to be the last whole second < i.End.
+	end := i.End.Unix()
+	if i.End.Nanosecond() == 0 {
+		end--
+	}
+
+	delta := end - start
+	// If delta == 0 there is exactly one whole second between i.Start and
+	// i.End, and both start and end are set to it. Return either.
 	if delta == 0 {
-		// If there is a second-precision time between i.Start and i.End,
-		// return that.
-		if t := time.Unix(end, 0); !t.Before(i.Start) {
-			return t
-		}
-		// If not, return the zero time.
+		return time.Unix(start, 0)
+	}
+	// If delta < 0 there are no whole seconds between i.Start and i.End. Return
+	// the zero time.
+	//
+	// For example:
+	//    Start = 2019-03-25 00:00:00.1 +0000 UTC
+	//    End = 2019-03-25 00:00:00.9 +0000 UTC
+	if delta < 0 {
 		return time.Time{}
 	}
 
+	// Otherwise, there is more than one whole second between i.Start and i.End.
+	// Randomly choose one, and return it.
 	rand.Seed(time.Now().UnixNano())
 	return time.Unix(start+rand.Int63n(delta), 0)
 }

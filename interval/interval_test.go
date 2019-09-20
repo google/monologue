@@ -45,16 +45,31 @@ func TestRandomSecond(t *testing.T) {
 			},
 		},
 		{
-			desc: "nanosecond",
+			desc: "one whole second between - delta = 0",
+			in: &Interval{
+				Start: time.Date(2019, time.March, 25, 0, 0, 0, 999999999, time.UTC),
+				End:   time.Date(2019, time.March, 25, 0, 0, 1, 1, time.UTC),
+			},
+		},
+		{
+			desc: "one whole second between, start boundary",
 			in: &Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
 				End:   time.Date(2019, time.March, 25, 0, 0, 0, 1, time.UTC),
 			},
 		},
 		{
-			desc: "nanosecond - no second",
+			desc: "no whole seconds between - delta < 0",
 			in: &Interval{
-				Start: time.Date(2019, time.March, 25, 0, 0, 0, 5000, time.UTC),
+				Start: time.Date(2019, time.March, 25, 0, 0, 0, 1, time.UTC),
+				End:   time.Date(2019, time.March, 25, 0, 0, 0, 999999999, time.UTC),
+			},
+			wantZero: true,
+		},
+		{
+			desc: "no whole seconds between, end boundary",
+			in: &Interval{
+				Start: time.Date(2019, time.March, 25, 0, 0, 0, 1, time.UTC),
 				End:   time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
 			},
 			wantZero: true,
@@ -76,7 +91,7 @@ func TestRandomSecond(t *testing.T) {
 			wantZero: true,
 		},
 		{
-			desc: "end before start",
+			desc: "end way before start",
 			in: &Interval{
 				Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
 				End:   time.Date(2019, time.March, 24, 0, 0, 0, 0, time.UTC),
