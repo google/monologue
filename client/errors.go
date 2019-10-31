@@ -19,6 +19,8 @@ import (
 	"reflect"
 )
 
+const maxBodyStringLen = 100
+
 // GetError for if http.Client.Get() fails.
 type GetError struct {
 	URL string
@@ -27,6 +29,26 @@ type GetError struct {
 
 func (e *GetError) Error() string {
 	return fmt.Sprintf("GET %s: %v", e.URL, e.Err)
+}
+
+// PostError for if http.Client.Post() fails.
+type PostError struct {
+	URL         string
+	ContentType string
+	Body        []byte
+	Err         error
+}
+
+func (e *PostError) Error() string {
+	body := string(e.Body)
+	if len(e.Body) > maxBodyStringLen {
+		body = fmt.Sprintf("%s... [truncated next %d bytes]", e.Body[:maxBodyStringLen], len(e.Body)-maxBodyStringLen)
+	}
+	return fmt.Sprintf("POST %s (content type: %s, body: %s): %v", e.URL, contentType, body, e.Err)
+}
+
+func (e *PostError) VerboseError() string {
+	return fmt.Sprintf("POST %s (content type: %s, body: %s): %v", e.URL, contentType, e.Body, e.Err)
 }
 
 // NilResponseError for if http.Client.Get() returns a nil response, but no
