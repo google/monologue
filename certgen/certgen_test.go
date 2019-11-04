@@ -199,6 +199,37 @@ func TestIssueCertificate(t *testing.T) {
 	}
 }
 
+func TestIssueCertificateChain(t *testing.T) {
+	root, rootKey, err := rootAndKeySetup(rootFile, rootKeyFile)
+	if err != nil {
+		t.Fatalf("root and key setup error: %s", err)
+	}
+	cc := certConfig
+	cc.NotAfterInterval = &interval.Interval{
+		Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
+		End:   time.Date(2020, time.March, 25, 0, 0, 0, 0, time.UTC),
+	}
+	ca := &CA{SigningCert: root, SigningKey: rootKey, CertConfig: cc}
+
+	chain, err := ca.IssueCertificateChain()
+
+	if err != nil {
+		t.Fatalf("ca.IssueCertificateChain() = _, %q, want nil error", err)
+	}
+
+	if len(chain) != 2 {
+		t.Fatalf("ca.IssueCertificateChain(): chain length = %d, want 2", len(chain))
+	}
+
+	if !chain[1].Equal(ca.SigningCert) {
+		t.Fatalf("ca.IssueCertificateChain(): root of chain (%v) is not equal to ca.SigningCert (%v)", chain[1], ca.SigningCert)
+	}
+
+	if err := chain[0].CheckSignatureFrom(chain[1]); err != nil {
+		t.Errorf("ca.IssueCertificateChain(): leaf certificate signature doesn't verify against ca.SigningCert: %s", err)
+	}
+}
+
 func TestExtendedDNSSAN(t *testing.T) {
 	tests := []struct {
 		desc    string

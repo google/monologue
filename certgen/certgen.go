@@ -106,6 +106,18 @@ func (ca *CA) IssueCertificate() (*x509.Certificate, error) {
 	return leaf, nil
 }
 
+// IssueCertificateChain creates a new certificate chain, containing a new leaf
+// certificate (as created by IssueCertificate) and the certificate for the key
+// that signed it (stored in the SigningCert field of the CA).
+func (ca *CA) IssueCertificateChain() ([]*x509.Certificate, error) {
+	leaf, err := ca.IssueCertificate()
+	if err != nil {
+		return nil, fmt.Errorf("error issuing leaf certificate: %s", err)
+	}
+
+	return []*x509.Certificate{leaf, ca.SigningCert}, nil
+}
+
 func leafTemplate(c CertificateConfig) (*x509.Certificate, error) {
 	sn, err := randSerialNumber()
 	if err != nil {
