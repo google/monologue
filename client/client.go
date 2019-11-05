@@ -56,6 +56,8 @@ const contentType = "application/json"
 // returned will contain:
 //   - GetError
 //      - HTTPData will contain only the timing of the request.
+//   - PostError
+//      - HTTPData will contain only the timing of the request.
 //   - NilResponseError
 //      - HTTPData will contain only the timing of the request.
 //   - BodyReadError
@@ -292,4 +294,39 @@ func (lc *LogClient) postAndParse(path string, body []byte, rsp interface{}) (*H
 		return httpData, &JSONParseError{Data: httpData.Body, Err: err}
 	}
 	return httpData, nil
+}
+
+// AddChain performs an add-chain request, posting the provided certificate
+// chain to the CT Log hosted at LogClient.url.  The first certificate in chain
+// should be the end-entity certificate, with the second chaining to the first
+// and so on to the last, which should either be the root certificate or a
+// certificate that chains to a root certificate that is accepted by the Log.
+// Returned is:
+//   - a populated ct.SignedCertificateTimestamp, if no error is returned.
+//   - an HTTPData struct (see above).
+//   - an error, which could be a normal error, any of the error types listed in
+//     the LogClient documentation (see above), or a ResponseToStructError.
+func (lc *LogClient) AddChain(chain []*x509.Certificate) (*ct.SignedCertificateTimestamp, *HTTPData, error) {
+	var req ct.AddChainRequest
+	for _, cert := range chain {
+		req.Chain = append(req.Chain, cert.Raw)
+	}
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var resp ct.AddChainResponse
+	httpData, err := lc.postAndParse(ct.AddChainPath, body, &resp)
+	if err != nil {
+		return nil, httpData, err
+	}
+
+	sct, err := resp.ToSignedCertificateTimestamp()
+	if err != nil {
+		return nil, httpData, &ResponseToStructError{From: reflect.TypeOf(resp), To: reflect.TypeOf(sct), Err: err}
+	}
+
+	return sct, httpData, nil
 }
