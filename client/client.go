@@ -296,6 +296,31 @@ func (lc *LogClient) postAndParse(path string, body []byte, rsp interface{}) (*H
 	return httpData, nil
 }
 
+func (lc *LogClient) addChain(path string, chain []*x509.Certificate) (*ct.SignedCertificateTimestamp, *HTTPData, error) {
+	var req ct.AddChainRequest
+	for _, cert := range chain {
+		req.Chain = append(req.Chain, cert.Raw)
+	}
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var resp ct.AddChainResponse
+	httpData, err := lc.postAndParse(path, body, &resp)
+	if err != nil {
+		return nil, httpData, err
+	}
+
+	sct, err := resp.ToSignedCertificateTimestamp()
+	if err != nil {
+		return nil, httpData, &ResponseToStructError{From: reflect.TypeOf(resp), To: reflect.TypeOf(sct), Err: err}
+	}
+
+	return sct, httpData, nil
+}
+
 // AddChain performs an add-chain request, posting the provided certificate
 // chain to the CT Log hosted at LogClient.url.  The first certificate in the
 // chain must be the end-entity certificate, with the second chaining to the
@@ -308,26 +333,21 @@ func (lc *LogClient) postAndParse(path string, body []byte, rsp interface{}) (*H
 //     the error types listed in the LogClient documentation (see above), or a
 //     ResponseToStructError.
 func (lc *LogClient) AddChain(chain []*x509.Certificate) (*ct.SignedCertificateTimestamp, *HTTPData, error) {
-	var req ct.AddChainRequest
-	for _, cert := range chain {
-		req.Chain = append(req.Chain, cert.Raw)
-	}
+	return lc.addChain(ct.AddChainPath, chain)
+}
 
-	body, err := json.Marshal(req)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var resp ct.AddChainResponse
-	httpData, err := lc.postAndParse(ct.AddChainPath, body, &resp)
-	if err != nil {
-		return nil, httpData, err
-	}
-
-	sct, err := resp.ToSignedCertificateTimestamp()
-	if err != nil {
-		return nil, httpData, &ResponseToStructError{From: reflect.TypeOf(resp), To: reflect.TypeOf(sct), Err: err}
-	}
-
-	return sct, httpData, nil
+// AddPreChain performs an add-pre-chain request, posting the provided
+// certificate chain to the CT Log hosted at LogClient.url.  The first
+// certificate in the chain must be the end-entity pre-certificate, with the
+// second chaining to the first and so on to the last, which should either be
+// the root certificate or a certificate that chains to a root certificate that
+// is accepted by the Log.
+// Returned is:
+//   - a populated ct.SignedCertificateTimestamp, if no error is returned.
+//   - an HTTPData struct (may be non-nil even when err != nil, see above).
+//   - an error, which could be an error from the Go standard library, any of
+//     the error types listed in the LogClient documentation (see above), or a
+//     ResponseToStructError.
+func (lc *LogClient) AddPreChain(chain []*x509.Certificate) (*ct.SignedCertificateTimestamp, *HTTPData, error) {
+	return lc.addChain(ct.AddPreChainPath, chain)
 }
