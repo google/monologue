@@ -944,7 +944,6 @@ func TestAddChain(t *testing.T) {
 	tests := []struct {
 		name        string
 		url         string
-		pemChain    []string
 		statusCode  int
 		rspBody     []byte
 		wantErrType reflect.Type
