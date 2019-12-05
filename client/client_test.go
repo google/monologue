@@ -927,6 +927,19 @@ func TestPostAndParse(t *testing.T) {
 	}
 }
 
+func createChain(t *testing.T, pemChain []string) []*x509.Certificate {
+	t.Helper()
+	var chain []*x509.Certificate
+	for _, pc := range pemChain {
+		cert, err := x509util.CertificateFromPEM([]byte(pc))
+		if err != nil {
+			t.Fatalf("Unable to parse from PEM to *x509.Certificate: %s", err)
+		}
+		chain = append(chain, cert)
+	}
+	return chain
+}
+
 func TestAddChain(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -940,32 +953,28 @@ func TestAddChain(t *testing.T) {
 		{
 			name:        "get error",
 			url:         "not-a-real-url",
-			pemChain:    []string{leafPEM, intermediatePEM, rootPEM},
 			wantErrType: reflect.TypeOf(&PostError{}),
 		},
 		{
 			name:        "HTTP status error",
-			pemChain:    []string{leafPEM, intermediatePEM, rootPEM},
 			statusCode:  http.StatusNotFound,
 			wantErrType: reflect.TypeOf(&HTTPStatusError{}),
 		},
 		{
 			name:        "JSON Parse Error",
-			pemChain:    []string{leafPEM, intermediatePEM, rootPEM},
 			statusCode:  http.StatusOK,
 			rspBody:     []byte("not-valid-json"),
 			wantErrType: reflect.TypeOf(&JSONParseError{}),
 		},
 		{
 			name:        "SCT missing Log ID",
-			pemChain:    []string{leafPEM, intermediatePEM, rootPEM},
 			statusCode:  http.StatusOK,
 			rspBody:     []byte(sctMissingID),
 			wantErrType: reflect.TypeOf(&ResponseToStructError{}),
 		},
 		{
+			// TODO(katjoyce): Return error for missing timestamp
 			name:       "SCT missing Timestamp",
-			pemChain:   []string{leafPEM, intermediatePEM, rootPEM},
 			statusCode: http.StatusOK,
 			rspBody:    []byte(sctMissingTimestamp),
 			wantSCT: &ct.AddChainResponse{
@@ -976,14 +985,12 @@ func TestAddChain(t *testing.T) {
 		},
 		{
 			name:        "SCT missing Signature",
-			pemChain:    []string{leafPEM, intermediatePEM, rootPEM},
 			statusCode:  http.StatusOK,
 			rspBody:     []byte(sctMissingSig),
 			wantErrType: reflect.TypeOf(&ResponseToStructError{}),
 		},
 		{
 			name:       "no error",
-			pemChain:   []string{leafPEM, intermediatePEM, rootPEM},
 			statusCode: http.StatusOK,
 			rspBody:    []byte(sct),
 			wantSCT: &ct.AddChainResponse{
@@ -994,20 +1001,14 @@ func TestAddChain(t *testing.T) {
 		},
 	}
 
+	chain := createChain(t, []string{leafPEM, intermediatePEM, rootPEM})
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			s := fakeServer(test.statusCode, test.rspBody)
 			lc := New(s.URL, &http.Client{})
 			if test.url != "" {
 				lc = New(test.url, &http.Client{})
-			}
-			var chain []*x509.Certificate
-			for _, pc := range test.pemChain {
-				cert, err := x509util.CertificateFromPEM([]byte(pc))
-				if err != nil {
-					t.Fatalf("Unable to parse from PEM to *x509.Certificate: %s", err)
-				}
-				chain = append(chain, cert)
 			}
 
 			gotSCT, gotHTTPData, gotErr := lc.AddChain(chain)
