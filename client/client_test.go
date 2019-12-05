@@ -1010,7 +1010,7 @@ func TestAddChain(t *testing.T) {
 				lc = New(test.url, &http.Client{})
 			}
 
-			gotSCT, gotHTTPData, gotErr := lc.AddChain(chain)
+			gotSCT, gotHTTPData, gotErr := lc.addChain(ct.AddChainPath, chain)
 			if gotErrType := reflect.TypeOf(gotErr); gotErrType != test.wantErrType {
 				t.Errorf("AddChain(): error was of type %v, want %v", gotErrType, test.wantErrType)
 			}
