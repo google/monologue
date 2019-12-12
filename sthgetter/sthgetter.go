@@ -31,7 +31,7 @@ import (
 	"github.com/google/monologue/storage"
 )
 
-var logStr = "STH Getter"
+const logStr = "STH Getter"
 
 // APICallSTHWriter represents a type that can store API Calls and store STHs.
 type APICallSTHWriter interface {
