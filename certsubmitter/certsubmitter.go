@@ -30,7 +30,7 @@ import (
 	"github.com/google/monologue/storage"
 )
 
-var logStr = "Certificate Submitter"
+const logStr = "Certificate Submitter"
 
 // Run runs a Certificate Submitter, which periodically issues a certificate or
 // pre-certificate, submits it to a CT Log, and checks and stores the SCT that
@@ -47,20 +47,16 @@ func Run(ctx context.Context, lc *client.LogClient, ca *certgen.CA, st storage.A
 		}
 
 		glog.Infof("%s: %s: adding chain...", l.URL, logStr)
-		sct, httpData, addErr := lc.AddChain(chain)
+		_, httpData, addErr := lc.AddChain(chain)
 		if len(httpData.Body) > 0 {
 			glog.Infof("%s: %s: response: %s", l.URL, logStr, httpData.Body)
 		}
 
-		// Store get-sth API call.
-		apiCall := apicall.New(ct.GetSTHStr, httpData, addErr)
+		// Store add-chain API call.
+		apiCall := apicall.New(ct.AddChainStr, httpData, addErr)
 		glog.Infof("%s: %s: writing API Call...", l.URL, logStr)
 		if err := st.WriteAPICall(ctx, l, apiCall); err != nil {
 			glog.Errorf("%s: %s: error writing API Call %s: %s", l.URL, logStr, apiCall, err)
-		}
-
-		if sct == nil {
-			return
 		}
 
 		// TODO(katjoyce): Check and store SCT
