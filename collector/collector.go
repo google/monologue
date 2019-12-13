@@ -26,6 +26,8 @@ import (
 	"time"
 
 	ct "github.com/google/certificate-transparency-go"
+	"github.com/google/monologue/certgen"
+	"github.com/google/monologue/certsubmitter"
 	"github.com/google/monologue/client"
 	"github.com/google/monologue/ctlog"
 	"github.com/google/monologue/rootsgetter"
@@ -44,6 +46,9 @@ type Config struct {
 	// How regularly the monitor should get root certificates from the Log.
 	// To disable getting roots, set to 0.
 	GetRootsPeriod time.Duration
+	// How regularly the monitor should submit a (pre-)certificate to the Log.
+	// To disable (pre-)certificate submission, set to 0.
+	AddChainPeriod time.Duration
 }
 
 // Storage is an interface containing all of the storage methods required by
@@ -57,7 +62,11 @@ type Storage interface {
 
 // Run runs the collector on the Log specified in cfg, and stores the collected
 // data in st.  Run doesn't return unless an error occurs or ctx expires.
-func Run(ctx context.Context, cfg *Config, cl *http.Client, st Storage) error {
+//
+// If cfg.AddChainPeriod is set to 0, i.e. the collector will not be issuing and
+// submitting certificates to the Log, then set ca to nil, as it will not be
+// used.
+func Run(ctx context.Context, cfg *Config, cl *http.Client, st Storage, ca *certgen.CA) error {
 	if cfg == nil {
 		return errors.New("nil Config")
 	}
@@ -84,6 +93,13 @@ func Run(ctx context.Context, cfg *Config, cl *http.Client, st Storage) error {
 		wg.Add(1)
 		go func() {
 			rootsgetter.Run(ctx, lc, st, cfg.Log, cfg.GetRootsPeriod)
+			wg.Done()
+		}()
+	}
+	if cfg.AddChainPeriod > 0 {
+		wg.Add(1)
+		go func() {
+			certsubmitter.Run(ctx, lc, ca, st, cfg.Log, cfg.AddChainPeriod)
 			wg.Done()
 		}()
 	}
