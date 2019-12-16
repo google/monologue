@@ -49,6 +49,9 @@ type Config struct {
 	// How regularly the monitor should submit a (pre-)certificate to the Log.
 	// To disable (pre-)certificate submission, set to 0.
 	AddChainPeriod time.Duration
+	// The CA to use to issue certificates for submission to the Log.  Only
+	// needs to be set if AddChainPeriod != 0.
+	CA *certgen.CA
 }
 
 // Storage is an interface containing all of the storage methods required by
@@ -62,11 +65,7 @@ type Storage interface {
 
 // Run runs the collector on the Log specified in cfg, and stores the collected
 // data in st.  Run doesn't return unless an error occurs or ctx expires.
-//
-// If cfg.AddChainPeriod is set to 0, i.e. the collector will not be issuing and
-// submitting certificates to the Log, then set ca to nil, as it will not be
-// used.
-func Run(ctx context.Context, cfg *Config, cl *http.Client, st Storage, ca *certgen.CA) error {
+func Run(ctx context.Context, cfg *Config, cl *http.Client, st Storage) error {
 	if cfg == nil {
 		return errors.New("nil Config")
 	}
@@ -99,7 +98,7 @@ func Run(ctx context.Context, cfg *Config, cl *http.Client, st Storage, ca *cert
 	if cfg.AddChainPeriod > 0 {
 		wg.Add(1)
 		go func() {
-			certsubmitter.Run(ctx, lc, ca, st, cfg.Log, cfg.AddChainPeriod)
+			certsubmitter.Run(ctx, lc, cfg.CA, st, cfg.Log, cfg.AddChainPeriod)
 			wg.Done()
 		}()
 	}

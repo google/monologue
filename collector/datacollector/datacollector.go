@@ -111,9 +111,10 @@ func main() {
 		GetSTHPeriod:   *getSTHPeriod,
 		GetRootsPeriod: *getRootsPeriod,
 		AddChainPeriod: *addChainPeriod,
+		CA:             ca,
 	}
 
-	if err := collector.Run(ctx, cfg, &http.Client{}, &print.Storage{}, ca); err != nil {
+	if err := collector.Run(ctx, cfg, &http.Client{}, &print.Storage{}); err != nil {
 		glog.Exit(err)
 	}
 }
