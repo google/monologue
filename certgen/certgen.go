@@ -83,6 +83,43 @@ type CA struct {
 // in the SigningCert and SigningKey fields of the CA, and configured using the
 // CertConfig in the CA.
 func (ca *CA) IssueCertificate() (*x509.Certificate, error) {
+	return ca.issueCertificate(false)
+}
+
+// IssueCertificateChain creates a new certificate chain, containing a new leaf
+// certificate (as created by IssueCertificate) and the certificate for the key
+// that signed it (stored in the SigningCert field of the CA).
+func (ca *CA) IssueCertificateChain() ([]*x509.Certificate, error) {
+	leaf, err := ca.IssueCertificate()
+	if err != nil {
+		return nil, fmt.Errorf("error issuing leaf certificate: %s", err)
+	}
+
+	return []*x509.Certificate{leaf, ca.SigningCert}, nil
+}
+
+// IssuePrecertificate creates a new leaf precertificate, issued by the key
+// specified in the SigningCert and SigningKey fields of the CA, and configured
+// using the CertConfig in the CA.
+func (ca *CA) IssuePrecertificate() (*x509.Certificate, error) {
+	return ca.issueCertificate(true)
+}
+
+// IssuePrecertificateChain creates a new certificate chain, containing a new
+// leaf precertificate (as created by IssuePrecertificate) and the certificate
+// for the key that signed it (stored in the SigningCert field of the CA).
+//
+// TODO(katjoyce): Add precert-signing-cert functionality.
+func (ca *CA) IssuePrecertificateChain() ([]*x509.Certificate, error) {
+	leaf, err := ca.IssuePrecertificate()
+	if err != nil {
+		return nil, fmt.Errorf("error issuing leaf precertificate: %s", err)
+	}
+
+	return []*x509.Certificate{leaf, ca.SigningCert}, nil
+}
+
+func (ca *CA) issueCertificate(precert bool) (*x509.Certificate, error) {
 	key, err := rsa.GenerateKey(crand.Reader, keySizeBits)
 	if err != nil {
 		return nil, fmt.Errorf("error generating key pair: %s", err)
@@ -91,6 +128,16 @@ func (ca *CA) IssueCertificate() (*x509.Certificate, error) {
 	template, err := leafTemplate(ca.CertConfig)
 	if err != nil {
 		return nil, fmt.Errorf("error creating leaf template: %s", err)
+	}
+
+	if precert {
+		// Add the CT poison extension.
+		poison := pkix.Extension{
+			Id:       x509.OIDExtensionCTPoison,
+			Critical: true,
+			Value:    []byte{0x05, 0x00}, // ASN.1 NULL
+		}
+		template.ExtraExtensions = append(template.ExtraExtensions, poison)
 	}
 
 	leafDER, err := x509.CreateCertificate(crand.Reader, template, ca.SigningCert, key.Public(), ca.SigningKey)
@@ -104,18 +151,6 @@ func (ca *CA) IssueCertificate() (*x509.Certificate, error) {
 	}
 
 	return leaf, nil
-}
-
-// IssueCertificateChain creates a new certificate chain, containing a new leaf
-// certificate (as created by IssueCertificate) and the certificate for the key
-// that signed it (stored in the SigningCert field of the CA).
-func (ca *CA) IssueCertificateChain() ([]*x509.Certificate, error) {
-	leaf, err := ca.IssueCertificate()
-	if err != nil {
-		return nil, fmt.Errorf("error issuing leaf certificate: %s", err)
-	}
-
-	return []*x509.Certificate{leaf, ca.SigningCert}, nil
 }
 
 func leafTemplate(c CertificateConfig) (*x509.Certificate, error) {

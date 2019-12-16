@@ -70,6 +70,7 @@ func TestIssueCertificate(t *testing.T) {
 	tests := []struct {
 		desc             string
 		notAfterInterval *interval.Interval
+		precert          bool
 	}{
 		{
 			desc: "not temporal",
@@ -88,6 +89,26 @@ func TestIssueCertificate(t *testing.T) {
 				End:   time.Date(2020, time.March, 25, 0, 0, 0, 0, time.UTC),
 			},
 		},
+		{
+			desc:    "precert not temporal",
+			precert: true,
+		},
+		{
+			desc: "precert smallest temporal",
+			notAfterInterval: &interval.Interval{
+				Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
+				End:   time.Date(2019, time.March, 25, 0, 0, 1, 0, time.UTC),
+			},
+			precert: true,
+		},
+		{
+			desc: "precert year temporal",
+			notAfterInterval: &interval.Interval{
+				Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
+				End:   time.Date(2020, time.March, 25, 0, 0, 0, 0, time.UTC),
+			},
+			precert: true,
+		},
 	}
 
 	root, rootKey, err := rootAndKeySetup(rootFile, rootKeyFile)
@@ -105,9 +126,15 @@ func TestIssueCertificate(t *testing.T) {
 			cc.NotAfterInterval = test.notAfterInterval
 			ca := &CA{SigningCert: root, SigningKey: rootKey, CertConfig: cc}
 
-			cert, err := ca.IssueCertificate()
+			var cert *x509.Certificate
+			var err error
+			if test.precert {
+				cert, err = ca.IssuePrecertificate()
+			} else {
+				cert, err = ca.IssueCertificate()
+			}
 			if err != nil {
-				t.Fatalf("error creating certificate: %s", err)
+				t.Fatalf("error creating (pre)certificate: %s", err)
 			}
 
 			// Check the fields that are set in the leaf template are present
@@ -163,6 +190,9 @@ func TestIssueCertificate(t *testing.T) {
 			}
 			if cert.IsCA {
 				t.Errorf("certificate IsCA = %t, want false", cert.IsCA)
+			}
+			if test.precert && !cert.IsPrecertificate() {
+				t.Error("certificate is not a precertificate, want a precertificate")
 			}
 
 			want := []string{cc.SubjectCommonName, extendedDNSSAN(cc.DNSPrefix, cc.SubjectCommonName)}
@@ -227,6 +257,41 @@ func TestIssueCertificateChain(t *testing.T) {
 
 	if err := chain[0].CheckSignatureFrom(chain[1]); err != nil {
 		t.Errorf("ca.IssueCertificateChain(): leaf certificate signature doesn't verify against ca.SigningCert: %s", err)
+	}
+}
+
+func TestIssuePrecertificateChain(t *testing.T) {
+	root, rootKey, err := rootAndKeySetup(rootFile, rootKeyFile)
+	if err != nil {
+		t.Fatalf("root and key setup error: %s", err)
+	}
+	cc := certConfig
+	cc.NotAfterInterval = &interval.Interval{
+		Start: time.Date(2019, time.March, 25, 0, 0, 0, 0, time.UTC),
+		End:   time.Date(2020, time.March, 25, 0, 0, 0, 0, time.UTC),
+	}
+	ca := &CA{SigningCert: root, SigningKey: rootKey, CertConfig: cc}
+
+	chain, err := ca.IssuePrecertificateChain()
+
+	if err != nil {
+		t.Fatalf("ca.IssuePrecertificateChain() = _, %q, want nil error", err)
+	}
+
+	if len(chain) != 2 {
+		t.Fatalf("ca.IssuePrecertificateChain(): chain length = %d, want 2", len(chain))
+	}
+
+	if !chain[0].IsPrecertificate() {
+		t.Fatal("ca.IssuePrecertificateChain(): leaf of chain is not a precertificate")
+	}
+
+	if !chain[1].Equal(ca.SigningCert) {
+		t.Fatalf("ca.IssuePrecertificateChain(): root of chain (%v) is not equal to ca.SigningCert (%v)", chain[1], ca.SigningCert)
+	}
+
+	if err := chain[0].CheckSignatureFrom(chain[1]); err != nil {
+		t.Errorf("ca.IssuePrecertificateChain(): leaf certificate signature doesn't verify against ca.SigningCert: %s", err)
 	}
 }
 
