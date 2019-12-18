@@ -83,10 +83,10 @@ type CA struct {
 // in the SigningCert and SigningKey fields of the CA, and configured using the
 // CertConfig in the CA.
 func (ca *CA) IssueCertificate() (*x509.Certificate, error) {
-	return ca.issueCertificate(false)
+	return ca.issueCertificate(false /* Not a precertificate */)
 }
 
-// IssueCertificateChain creates a new certificate chain, containing a new leaf
+// IssueCertificateChain creates a certificate chain, containing a new leaf
 // certificate (as created by IssueCertificate) and the certificate for the key
 // that signed it (stored in the SigningCert field of the CA).
 func (ca *CA) IssueCertificateChain() ([]*x509.Certificate, error) {
@@ -102,12 +102,12 @@ func (ca *CA) IssueCertificateChain() ([]*x509.Certificate, error) {
 // specified in the SigningCert and SigningKey fields of the CA, and configured
 // using the CertConfig in the CA.
 func (ca *CA) IssuePrecertificate() (*x509.Certificate, error) {
-	return ca.issueCertificate(true)
+	return ca.issueCertificate(true /* precertificate */)
 }
 
-// IssuePrecertificateChain creates a new certificate chain, containing a new
-// leaf precertificate (as created by IssuePrecertificate) and the certificate
-// for the key that signed it (stored in the SigningCert field of the CA).
+// IssuePrecertificateChain creates a certificate chain, containing a new leaf
+// precertificate (as created by IssuePrecertificate) and the certificate for
+// the key that signed it (stored in the SigningCert field of the CA).
 //
 // TODO(katjoyce): Add precert-signing-cert functionality.
 func (ca *CA) IssuePrecertificateChain() ([]*x509.Certificate, error) {

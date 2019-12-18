@@ -134,7 +134,7 @@ func TestIssueCertificate(t *testing.T) {
 				cert, err = ca.IssueCertificate()
 			}
 			if err != nil {
-				t.Fatalf("error creating (pre)certificate: %s", err)
+				t.Fatalf("error creating (pre? %t)certificate: %s", test.precert, err)
 			}
 
 			// Check the fields that are set in the leaf template are present
@@ -191,8 +191,8 @@ func TestIssueCertificate(t *testing.T) {
 			if cert.IsCA {
 				t.Errorf("certificate IsCA = %t, want false", cert.IsCA)
 			}
-			if test.precert && !cert.IsPrecertificate() {
-				t.Error("certificate is not a precertificate, want a precertificate")
+			if gotPre, wantPre := cert.IsPrecertificate(), test.precert; gotPre != wantPre {
+				t.Errorf("certificate type is wrong: got precertificate? %t, want precertificate? %t", gotPre, wantPre)
 			}
 
 			want := []string{cc.SubjectCommonName, extendedDNSSAN(cc.DNSPrefix, cc.SubjectCommonName)}
