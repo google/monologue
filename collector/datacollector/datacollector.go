@@ -71,8 +71,7 @@ func main() {
 	var ca *certgen.CA
 	if *addChainPeriod > 0 {
 		var err error
-		ca, err = setupCA(l, *signingCertFile, *signingKeyFile)
-		if err != nil {
+		if ca, err = setupCA(l, *signingCertFile, *signingKeyFile); err != nil {
 			glog.Exitf("Unable to create CA: %s", err)
 		}
 	}
@@ -90,7 +89,7 @@ func main() {
 	}
 }
 
-func setupCA(l *ctlog.Log, signingCertFile, signingKeyFile string) (*certgen.CA, error) {
+func setupCA(ctl *ctlog.Log, signingCertFile, signingKeyFile string) (*certgen.CA, error) {
 	// TODO(katjoyce): Add support for other key encodings and
 	// generally improve key management here.
 	signingCertPEM, err := ioutil.ReadFile(signingCertFile)
@@ -118,7 +117,7 @@ func setupCA(l *ctlog.Log, signingCertFile, signingKeyFile string) (*certgen.CA,
 		SubjectLocality:           "London",
 		SubjectCountry:            "GB",
 		SignatureAlgorithm:        x509.SHA256WithRSA,
-		DNSPrefix:                 l.Name,
+		DNSPrefix:                 ctl.Name,
 	}
 
 	return &certgen.CA{
