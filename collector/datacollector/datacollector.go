@@ -20,6 +20,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -69,40 +70,10 @@ func main() {
 
 	var ca *certgen.CA
 	if *addChainPeriod > 0 {
-		// TODO(katjoyce): Add support for other key encodings and
-		// generally improve key management here.
-		signingCertPEM, err := ioutil.ReadFile(*signingCertFile)
+		var err error
+		ca, err = setupCA(l, *signingCertFile, *signingKeyFile)
 		if err != nil {
-			glog.Exitf("Error reading signing cert from %s: %s", *signingCertFile, err)
-		}
-		signingCert, err := x509util.CertificateFromPEM(signingCertPEM)
-		if err != nil {
-			glog.Exitf("Error parsing signing cert: %s", err)
-		}
-
-		signingKeyPEM, err := ioutil.ReadFile(*signingKeyFile)
-		if err != nil {
-			glog.Exitf("Error reading signing key from %s: %s", *signingKeyFile, err)
-		}
-		signingKey, err := pem.UnmarshalPrivateKey(string(signingKeyPEM), "")
-		if err != nil {
-			glog.Exitf("Error parsing signing key: %s", err)
-		}
-
-		certConfig := certgen.CertificateConfig{
-			SubjectCommonName:         "flowers-to-the-world.com",
-			SubjectOrganization:       "Google",
-			SubjectOrganizationalUnit: "Certificate Transparency",
-			SubjectLocality:           "London",
-			SubjectCountry:            "GB",
-			SignatureAlgorithm:        x509.SHA256WithRSA,
-			DNSPrefix:                 l.Name,
-		}
-
-		ca = &certgen.CA{
-			SigningCert: signingCert,
-			SigningKey:  signingKey,
-			CertConfig:  certConfig,
+			glog.Exitf("Unable to create CA: %s", err)
 		}
 	}
 
@@ -117,4 +88,42 @@ func main() {
 	if err := collector.Run(ctx, cfg, &http.Client{}, &print.Storage{}); err != nil {
 		glog.Exit(err)
 	}
+}
+
+func setupCA(l *ctlog.Log, signingCertFile, signingKeyFile string) (*certgen.CA, error) {
+	// TODO(katjoyce): Add support for other key encodings and
+	// generally improve key management here.
+	signingCertPEM, err := ioutil.ReadFile(signingCertFile)
+	if err != nil {
+		return nil, fmt.Errorf("Error reading signing cert from %s: %s", signingCertFile, err)
+	}
+	signingCert, err := x509util.CertificateFromPEM(signingCertPEM)
+	if err != nil {
+		return nil, fmt.Errorf("Error parsing signing cert: %s", err)
+	}
+
+	signingKeyPEM, err := ioutil.ReadFile(signingKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("Error reading signing key from %s: %s", signingKeyFile, err)
+	}
+	signingKey, err := pem.UnmarshalPrivateKey(string(signingKeyPEM), "")
+	if err != nil {
+		return nil, fmt.Errorf("Error parsing signing key: %s", err)
+	}
+
+	certConfig := certgen.CertificateConfig{
+		SubjectCommonName:         "flowers-to-the-world.com",
+		SubjectOrganization:       "Google",
+		SubjectOrganizationalUnit: "Certificate Transparency",
+		SubjectLocality:           "London",
+		SubjectCountry:            "GB",
+		SignatureAlgorithm:        x509.SHA256WithRSA,
+		DNSPrefix:                 l.Name,
+	}
+
+	return &certgen.CA{
+		SigningCert: signingCert,
+		SigningKey:  signingKey,
+		CertConfig:  certConfig,
+	}, nil
 }

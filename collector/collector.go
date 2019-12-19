@@ -49,8 +49,8 @@ type Config struct {
 	// How regularly the monitor should submit a (pre-)certificate to the Log.
 	// To disable (pre-)certificate submission, set to 0.
 	AddChainPeriod time.Duration
-	// The CA to use to issue certificates for submission to the Log.  Only
-	// needs to be set if AddChainPeriod != 0.
+	// The CA that issues certificates for submission to the Log.  Must be set
+	// if AddChainPeriod != 0.
 	CA *certgen.CA
 }
 
