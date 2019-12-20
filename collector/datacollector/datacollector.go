@@ -20,24 +20,34 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/google/certificate-transparency-go/x509"
+	"github.com/google/certificate-transparency-go/x509util"
+	"github.com/google/monologue/certgen"
 	"github.com/google/monologue/collector"
 	"github.com/google/monologue/ctlog"
 	"github.com/google/monologue/storage/print"
+	"github.com/google/trillian/crypto/keys/pem"
 )
 
 var (
 	getRootsPeriod = flag.Duration("get_roots_period", 0, "How regularly the monitor should get root certificates from the Log")
 	getSTHPeriod   = flag.Duration("get_sth_period", 0, "How regularly the monitor should get an STH from the Log")
+	addChainPeriod = flag.Duration("add_chain_period", 0, "How regularly the monitor should submit a (pre-)certificate to the Log")
 	// TODO(katjoyce): Change to read from log_list.json or all_logs_list.json to get Log details.
 	// TODO(katjoyce): Add ability to run against multiple Logs.
 	logURL    = flag.String("log_url", "", "The URL of the Log to monitor, e.g. https://ct.googleapis.com/pilot/")
 	logName   = flag.String("log_name", "", "A short, snappy, canonical name for the Log to monitor, e.g. google_pilot")
 	b64PubKey = flag.String("public_key", "", "The base64-encoded public key of the Log to monitor")
 	mmd       = flag.Duration("mmd", 24*time.Hour, "The Maximum Merge Delay for the Log")
+
+	signingCertFile = flag.String("signing_cert", "", "Path to the certificate containing the public key that corresponds to the signing key. Only needed if add_chain_period is not 0")
+	signingKeyFile  = flag.String("signing_key", "", "Path to the private key for signing certificates to submit to the Log. Only needed if add_chain_period is not 0")
 )
 
 func main() {
@@ -58,13 +68,61 @@ func main() {
 		glog.Exitf("Unable to obtain Log metadata: %s", err)
 	}
 
+	var ca *certgen.CA
+	if *addChainPeriod > 0 {
+		var err error
+		if ca, err = setupCA(l, *signingCertFile, *signingKeyFile); err != nil {
+			glog.Exitf("Unable to create CA: %s", err)
+		}
+	}
+
 	cfg := &collector.Config{
 		Log:            l,
 		GetSTHPeriod:   *getSTHPeriod,
 		GetRootsPeriod: *getRootsPeriod,
+		AddChainPeriod: *addChainPeriod,
+		CA:             ca,
 	}
 
 	if err := collector.Run(ctx, cfg, &http.Client{}, &print.Storage{}); err != nil {
 		glog.Exit(err)
 	}
+}
+
+func setupCA(ctl *ctlog.Log, signingCertFile, signingKeyFile string) (*certgen.CA, error) {
+	// TODO(katjoyce): Add support for other key encodings and
+	// generally improve key management here.
+	signingCertPEM, err := ioutil.ReadFile(signingCertFile)
+	if err != nil {
+		return nil, fmt.Errorf("Error reading signing cert from %s: %s", signingCertFile, err)
+	}
+	signingCert, err := x509util.CertificateFromPEM(signingCertPEM)
+	if err != nil {
+		return nil, fmt.Errorf("Error parsing signing cert: %s", err)
+	}
+
+	signingKeyPEM, err := ioutil.ReadFile(signingKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("Error reading signing key from %s: %s", signingKeyFile, err)
+	}
+	signingKey, err := pem.UnmarshalPrivateKey(string(signingKeyPEM), "")
+	if err != nil {
+		return nil, fmt.Errorf("Error parsing signing key: %s", err)
+	}
+
+	certConfig := certgen.CertificateConfig{
+		SubjectCommonName:         "flowers-to-the-world.com",
+		SubjectOrganization:       "Google",
+		SubjectOrganizationalUnit: "Certificate Transparency",
+		SubjectLocality:           "London",
+		SubjectCountry:            "GB",
+		SignatureAlgorithm:        x509.SHA256WithRSA,
+		DNSPrefix:                 ctl.Name,
+	}
+
+	return &certgen.CA{
+		SigningCert: signingCert,
+		SigningKey:  signingKey,
+		CertConfig:  certConfig,
+	}, nil
 }
