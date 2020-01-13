@@ -260,7 +260,7 @@ func parseCertificate(b64 string) (*x509.Certificate, error) {
 //     GetAndParse().
 func (lc *LogClient) GetProofByHash(hash []byte, treeSize uint64) (*ct.GetProofByHashResponse, *HTTPData, error) {
 	params := map[string]string{
-		"hash":      base64.StdEncoding.EncodeToString(hash),
+		"hash":      base64.URLEncoding.EncodeToString(hash),
 		"tree_size": strconv.FormatUint(treeSize, 10),
 	}
 	var resp ct.GetProofByHashResponse
