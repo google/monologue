@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -248,6 +249,27 @@ func parseCertificate(b64 string) (*x509.Certificate, error) {
 	}
 
 	return x509.ParseCertificate(certDER)
+}
+
+// GetProofByHash performs a get-proof-by-hash request, with parameters hash and
+// treeSize.
+// Returned is:
+//   - a GetProofByHashResponse struct, if no error is returned.
+//   - the HTTPData struct returned by GetAndParse() (see above).
+//   - an error, which could be any of the error types returned by
+//     GetAndParse().
+func (lc *LogClient) GetProofByHash(hash []byte, treeSize uint64) (*ct.GetProofByHashResponse, *HTTPData, error) {
+	params := map[string]string{
+		"hash":      base64.URLEncoding.EncodeToString(hash),
+		"tree_size": strconv.FormatUint(treeSize, 10),
+	}
+	var resp ct.GetProofByHashResponse
+	httpData, err := lc.getAndParse(ct.GetProofByHashPath, params, &resp)
+	if err != nil {
+		return nil, httpData, err
+	}
+
+	return &resp, httpData, nil
 }
 
 // post makes an HTTP POST call to path on the server at lc.url, sending the

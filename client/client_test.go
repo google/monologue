@@ -812,11 +812,88 @@ fPlYaH1dawuJPeyCj9BeG7sL1CVFlCs+OfzFona1XbuAVnhIwidhE3NGt31KKMfJ
 1Cib2piaBrR9qzaJ7L7bNQDCig==                                                     
 -----END CERTIFICATE-----`
 
-	sct                 = `{"sct_version":0,"id":"CEEUmABxUywWGQRgvPxH/cJlOvopLHKzf/hjrinMyfA=","timestamp":1512556025588,"extensions":"","signature":"BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="}`
-	sctMissingID        = `{"sct_version":0,"timestamp":1512556025588,"extensions":"","signature":"BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="}`
-	sctMissingTimestamp = `{"sct_version":0,"id":"CEEUmABxUywWGQRgvPxH/cJlOvopLHKzf/hjrinMyfA=","extensions":"","signature":"BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="}`
-	sctMissingSig       = `{"sct_version":0,"id":"CEEUmABxUywWGQRgvPxH/cJlOvopLHKzf/hjrinMyfA=","timestamp":1512556025588,"extensions":""}`
+	sct = `{"sct_version":0,"id":"CEEUmABxUywWGQRgvPxH/cJlOvopLHKzf/hjrinMyfA=","timestamp":1512556025588,"extensions":"","signature":"BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="}`
+
+	leafHash        = "uvjbEw+porcnNLYkXBSVecJdl7QfuL4SAwZZWobcwHg="
+	treeSize uint64 = 30
+
+	getProofByHashRespBody = `{"leaf_index":10,"audit_path":["pWAVPaJIQdVdHgm/GWo/tf0a0gaG4JjCanqHc49kxpU=","+05OCiIkipWWDKhByJGctdwLiSo1geIvWF8pDGv2VFw=","aBTbMciBy2Ey35az07wjEiFN1kWn+37LVa07BQCH2qo=","t+sKhOFhVnTT/6bmOSyVWKfGagwJBVvcyynO2oJLxsY=","LRdkcLMeof0FdRmX6IVaDTITWJUr8eABhUaHa0vcWNw="]}`
 )
+
+func TestGetProofByHash(t *testing.T) {
+	tests := []struct {
+		name         string
+		url          string
+		statusCode   int
+		body         []byte
+		wantErrType  reflect.Type
+		wantResponse *ct.GetProofByHashResponse
+	}{
+		{
+			name:        "get error",
+			url:         "not-a-real-url",
+			wantErrType: reflect.TypeOf(&GetError{}),
+		},
+		{
+			name:        "HTTP status error",
+			statusCode:  http.StatusNotFound,
+			wantErrType: reflect.TypeOf(&HTTPStatusError{}),
+		},
+		{
+			name:        "JSON Parse Error",
+			statusCode:  http.StatusOK,
+			body:        []byte("not-valid-json"),
+			wantErrType: reflect.TypeOf(&JSONParseError{}),
+		},
+		{
+			name:       "no error",
+			statusCode: http.StatusOK,
+			body:       []byte(getProofByHashRespBody),
+			wantResponse: &ct.GetProofByHashResponse{
+				LeafIndex: 10,
+				AuditPath: [][]byte{
+					mustB64Decode("pWAVPaJIQdVdHgm/GWo/tf0a0gaG4JjCanqHc49kxpU="),
+					mustB64Decode("+05OCiIkipWWDKhByJGctdwLiSo1geIvWF8pDGv2VFw="),
+					mustB64Decode("aBTbMciBy2Ey35az07wjEiFN1kWn+37LVa07BQCH2qo="),
+					mustB64Decode("t+sKhOFhVnTT/6bmOSyVWKfGagwJBVvcyynO2oJLxsY="),
+					mustB64Decode("LRdkcLMeof0FdRmX6IVaDTITWJUr8eABhUaHa0vcWNw="),
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s := fakeServer(test.statusCode, test.body)
+			lc := New(s.URL, &http.Client{})
+			if test.url != "" {
+				lc = New(test.url, &http.Client{})
+			}
+
+			gotResp, gotHTTPData, gotErr := lc.GetProofByHash(mustB64Decode(leafHash), treeSize)
+			if gotErrType := reflect.TypeOf(gotErr); gotErrType != test.wantErrType {
+				t.Errorf("GetProofByHash(%s, %d): error was of type %v, want %v", leafHash, treeSize, gotErrType, test.wantErrType)
+			}
+			if gotHTTPData == nil {
+				t.Fatalf("GetProofByHash(%s, %d) = (_, nil, _), want an HTTPData containing at least the timing of the request", leafHash, treeSize)
+			}
+			if gotHTTPData.Timing.Start.IsZero() || gotHTTPData.Timing.End.IsZero() {
+				t.Errorf("GetProofByHash(%s, %d): HTTPData.Timing = %+v, want the Timing to be populated with the timing of the request", leafHash, treeSize, gotHTTPData.Timing)
+			}
+			if !bytes.Equal(gotHTTPData.Body, test.body) {
+				t.Errorf("GetProofByHash(%s, %d): HTTPData.Body = %s, want %s", leafHash, treeSize, gotHTTPData.Body, test.body)
+			}
+
+			if gotErr != nil {
+				return
+			}
+
+			if diff := cmp.Diff(gotResp, test.wantResponse); diff != "" {
+				t.Errorf("GetProofByHash(%s, %d): ct.GetProofByHashResponse diff: (-got +want)\n%s", leafHash, treeSize, diff)
+			}
+		})
+	}
+}
 
 // TODO(katjoyce): Improve these tests - try to find a way to test for all error
 // types that could be returned by Post.
@@ -941,6 +1018,12 @@ func createChain(t *testing.T, pemChain []string) []*x509.Certificate {
 }
 
 func TestAddChain(t *testing.T) {
+	var (
+		sctMissingID        = `{"sct_version":0,"timestamp":1512556025588,"extensions":"","signature":"BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="}`
+		sctMissingTimestamp = `{"sct_version":0,"id":"CEEUmABxUywWGQRgvPxH/cJlOvopLHKzf/hjrinMyfA=","extensions":"","signature":"BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="}`
+		sctMissingSig       = `{"sct_version":0,"id":"CEEUmABxUywWGQRgvPxH/cJlOvopLHKzf/hjrinMyfA=","timestamp":1512556025588,"extensions":""}`
+	)
+
 	tests := []struct {
 		name        string
 		url         string
