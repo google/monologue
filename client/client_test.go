@@ -870,7 +870,7 @@ func TestGetProofByHash(t *testing.T) {
 				lc = New(test.url, &http.Client{})
 			}
 
-			gotResp, gotHTTPData, gotErr := lc.GetProofByHash(leafHash, treeSize)
+			gotResp, gotHTTPData, gotErr := lc.GetProofByHash(mustB64Decode(leafHash), treeSize)
 			if gotErrType := reflect.TypeOf(gotErr); gotErrType != test.wantErrType {
 				t.Errorf("GetProofByHash(%s, %d): error was of type %v, want %v", leafHash, treeSize, gotErrType, test.wantErrType)
 			}
