@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package sthgetter periodically gets an STH from a Log, checks that each one
-// meets per-STH requirements defined in RFC 6962, and stores them.
+// Package testonly contains resources used during testing by multiple of the
+// monologue packages.
 package testonly
 
 import "encoding/base64"
