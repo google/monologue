@@ -18,6 +18,8 @@ package certsubmitter
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang/glog"
@@ -47,7 +49,7 @@ func Run(ctx context.Context, lc *client.LogClient, ca *certgen.CA, st storage.A
 		}
 
 		glog.Infof("%s: %s: adding chain...", l.URL, logStr)
-		_, httpData, addErr := lc.AddChain(chain)
+		sct, httpData, addErr := lc.AddChain(chain)
 		if len(httpData.Body) > 0 {
 			glog.Infof("%s: %s: response: %s", l.URL, logStr, httpData.Body)
 		}
@@ -59,8 +61,51 @@ func Run(ctx context.Context, lc *client.LogClient, ca *certgen.CA, st storage.A
 			glog.Errorf("%s: %s: error writing API Call %s: %s", l.URL, logStr, apiCall, err)
 		}
 
-		// TODO(katjoyce): Check and store SCT
+		// Verify the SCT.
+		errs := checkSCT(sct)
+
+		// Log any errors found.
+		if len(errs) != 0 {
+			var b strings.Builder
+			fmt.Fprintf(&b, "SCT verification errors for SCT %v:", sct)
+			for _, e := range errs {
+				fmt.Fprintf(&b, "\n\t%T: %v,", e, e)
+			}
+			glog.Infof("%s: %s: %s", l.URL, logStr, b.String())
+		}
+
+		// TODO(katjoyce): Store the SCT & associated errors.
 	})
 
 	glog.Infof("%s: %s: stopped", l.URL, logStr)
+}
+
+func checkSCT(sct *ct.SignedCertificateTimestamp) []error {
+	var errs []error
+
+	// Check that the SCT is version 1.
+	//
+	// Section 4.1 of RFC 6962 says ‘a compliant v1 client implementation must
+	// not expect this to be v1’, so it would not count as Log misbehaviour if
+	// a Log issued an SCT with the version set to something else.  However,
+	// given the current state of the CT ecosystem it would be strange to see
+	// such a thing, and worth noting if seen.
+	//
+	// TODO(katjoyce): Add a way to classify errors as 'misbehaviour' vs
+	// 'unexpected behaviour worth noting'.
+	if sct.SCTVersion != ct.V1 {
+		errs = append(errs, &NotV1Error{Version: sct.SCTVersion})
+	}
+
+	// TODO(katjoyce): Implement other SCT checks.
+
+	return errs
+}
+
+type NotV1Error struct {
+	Version ct.Version
+}
+
+func (e *NotV1Error) Error() string {
+	return fmt.Sprintf("version is %v, not v1(0)", e.Version)
 }
