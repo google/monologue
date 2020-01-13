@@ -15,31 +15,22 @@
 package sthgetter
 
 import (
-	"encoding/base64"
-	"fmt"
 	"reflect"
 	"testing"
 	"time"
 
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/monologue/ctlog"
+	"github.com/google/monologue/testonly"
 )
-
-func mustB64Decode(b64 string) []byte {
-	b, err := base64.StdEncoding.DecodeString(b64)
-	if err != nil {
-		panic(fmt.Sprintf("error decoding %s: %s", b64, err))
-	}
-	return b
-}
 
 var (
 	// A valid STH from the Google Pilot Log.
 	validSTH = &ct.GetSTHResponse{
 		TreeSize:          580682455,
 		Timestamp:         1554897886201, // 2019-04-10 12:04:46.201 UTC
-		SHA256RootHash:    mustB64Decode("VicMkhzrGNv+lNCwXRVHH0WniZuDg3IXhgPai5kyHdA="),
-		TreeHeadSignature: mustB64Decode("BAMARzBFAiEAs0GiYnPT5ZQJ2LGLhLmIXZXSLg+N+CxTkJL75tECEqgCIBZzJGyzH9h+IL63XCvRlfTKhLvzSxVicrT30+rwTSU0"),
+		SHA256RootHash:    testonly.MustB64Decode("VicMkhzrGNv+lNCwXRVHH0WniZuDg3IXhgPai5kyHdA="),
+		TreeHeadSignature: testonly.MustB64Decode("BAMARzBFAiEAs0GiYnPT5ZQJ2LGLhLmIXZXSLg+N+CxTkJL75tECEqgCIBZzJGyzH9h+IL63XCvRlfTKhLvzSxVicrT30+rwTSU0"),
 	}
 	// The public key for the Google Pilot Log.
 	b64PubKey = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEfahLEimAoz2t01p3uMziiLOl/fHTDM0YDOhBRuiBARsV4UvxG2LdNgoIGLrtCzWE0J5APC2em4JlvR8EEEFMoA=="
