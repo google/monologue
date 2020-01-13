@@ -27,6 +27,7 @@ import (
 	"github.com/google/certificate-transparency-go/x509"
 	"github.com/google/certificate-transparency-go/x509util"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/monologue/testonly"
 )
 
 func TestBuildURL(t *testing.T) {
@@ -222,14 +223,6 @@ func TestGetAndParse(t *testing.T) {
 	}
 }
 
-func mustB64Decode(s string) []byte {
-	b, err := base64.StdEncoding.DecodeString(s)
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
 func TestGetSTH(t *testing.T) {
 	sthMissingTreeSize := `{"timestamp":1534165797863,"sha256_root_hash":"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=","tree_head_signature":"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="}`
 	sthMissingTimestamp := `{"tree_size":344104340,"sha256_root_hash":"ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU=","tree_head_signature":"BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="}`
@@ -269,8 +262,8 @@ func TestGetSTH(t *testing.T) {
 			wantSTH: &ct.GetSTHResponse{
 				TreeSize:          0,
 				Timestamp:         1534165797863,
-				SHA256RootHash:    mustB64Decode("ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU="),
-				TreeHeadSignature: mustB64Decode("BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="),
+				SHA256RootHash:    testonly.MustB64Decode("ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU="),
+				TreeHeadSignature: testonly.MustB64Decode("BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="),
 			},
 		},
 		{
@@ -281,8 +274,8 @@ func TestGetSTH(t *testing.T) {
 			wantSTH: &ct.GetSTHResponse{
 				TreeSize:          344104340,
 				Timestamp:         0,
-				SHA256RootHash:    mustB64Decode("ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU="),
-				TreeHeadSignature: mustB64Decode("BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="),
+				SHA256RootHash:    testonly.MustB64Decode("ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU="),
+				TreeHeadSignature: testonly.MustB64Decode("BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="),
 			},
 		},
 		{
@@ -310,8 +303,8 @@ func TestGetSTH(t *testing.T) {
 			wantSTH: &ct.GetSTHResponse{
 				TreeSize:          344104340,
 				Timestamp:         1534165797863,
-				SHA256RootHash:    mustB64Decode("ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU="),
-				TreeHeadSignature: mustB64Decode("BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="),
+				SHA256RootHash:    testonly.MustB64Decode("ygEuQj0whDc1GYzvyAFYMKODrZac2Lu3HOnILxJxIqU="),
+				TreeHeadSignature: testonly.MustB64Decode("BAMARjBEAiBNI3ZY018rZ0/mGRyadQpDrO7lnAA2zRTuGNBp4YJV7QIgD6gWqMf3nqxxcl6K4Rg6sFi+FClVL2S8sbN3JhfCAs8="),
 			},
 		},
 	}
@@ -852,11 +845,11 @@ func TestGetProofByHash(t *testing.T) {
 			wantResponse: &ct.GetProofByHashResponse{
 				LeafIndex: 10,
 				AuditPath: [][]byte{
-					mustB64Decode("pWAVPaJIQdVdHgm/GWo/tf0a0gaG4JjCanqHc49kxpU="),
-					mustB64Decode("+05OCiIkipWWDKhByJGctdwLiSo1geIvWF8pDGv2VFw="),
-					mustB64Decode("aBTbMciBy2Ey35az07wjEiFN1kWn+37LVa07BQCH2qo="),
-					mustB64Decode("t+sKhOFhVnTT/6bmOSyVWKfGagwJBVvcyynO2oJLxsY="),
-					mustB64Decode("LRdkcLMeof0FdRmX6IVaDTITWJUr8eABhUaHa0vcWNw="),
+					testonly.MustB64Decode("pWAVPaJIQdVdHgm/GWo/tf0a0gaG4JjCanqHc49kxpU="),
+					testonly.MustB64Decode("+05OCiIkipWWDKhByJGctdwLiSo1geIvWF8pDGv2VFw="),
+					testonly.MustB64Decode("aBTbMciBy2Ey35az07wjEiFN1kWn+37LVa07BQCH2qo="),
+					testonly.MustB64Decode("t+sKhOFhVnTT/6bmOSyVWKfGagwJBVvcyynO2oJLxsY="),
+					testonly.MustB64Decode("LRdkcLMeof0FdRmX6IVaDTITWJUr8eABhUaHa0vcWNw="),
 				},
 			},
 		},
@@ -870,7 +863,7 @@ func TestGetProofByHash(t *testing.T) {
 				lc = New(test.url, &http.Client{})
 			}
 
-			gotResp, gotHTTPData, gotErr := lc.GetProofByHash(mustB64Decode(leafHash), treeSize)
+			gotResp, gotHTTPData, gotErr := lc.GetProofByHash(testonly.MustB64Decode(leafHash), treeSize)
 			if gotErrType := reflect.TypeOf(gotErr); gotErrType != test.wantErrType {
 				t.Errorf("GetProofByHash(%s, %d): error was of type %v, want %v", leafHash, treeSize, gotErrType, test.wantErrType)
 			}
@@ -1060,9 +1053,9 @@ func TestAddChain(t *testing.T) {
 			statusCode: http.StatusOK,
 			rspBody:    []byte(sctMissingTimestamp),
 			wantSCT: &ct.AddChainResponse{
-				ID:        mustB64Decode("CEEUmABxUywWGQRgvPxH/cJlOvopLHKzf/hjrinMyfA="),
+				ID:        testonly.MustB64Decode("CEEUmABxUywWGQRgvPxH/cJlOvopLHKzf/hjrinMyfA="),
 				Timestamp: 0,
-				Signature: mustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="),
+				Signature: testonly.MustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="),
 			},
 		},
 		{
@@ -1076,9 +1069,9 @@ func TestAddChain(t *testing.T) {
 			statusCode: http.StatusOK,
 			rspBody:    []byte(sct),
 			wantSCT: &ct.AddChainResponse{
-				ID:        mustB64Decode("CEEUmABxUywWGQRgvPxH/cJlOvopLHKzf/hjrinMyfA="),
+				ID:        testonly.MustB64Decode("CEEUmABxUywWGQRgvPxH/cJlOvopLHKzf/hjrinMyfA="),
 				Timestamp: 1512556025588,
-				Signature: mustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="),
+				Signature: testonly.MustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="),
 			},
 		},
 	}
