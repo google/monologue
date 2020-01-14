@@ -71,11 +71,24 @@ func TestCheckSCT(t *testing.T) {
 			},
 		},
 		{
+			desc: "SCT contains extensions data",
+			sct: &ct.AddChainResponse{
+				ID:         testonly.MustB64Decode("CEEUmABxUywWGQRgvPxH/cJlOvopLHKzf/hjrinMyfA="),
+				Timestamp:  0,
+				Extensions: "data",
+				Signature:  testonly.MustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="),
+			},
+			wantErrTypes: []reflect.Type{
+				reflect.TypeOf(&SCTExtensionsError{}),
+			},
+		},
+		{
 			desc: "no errors",
 			sct: &ct.AddChainResponse{
-				ID:        testonly.MustB64Decode("CEEUmABxUywWGQRgvPxH/cJlOvopLHKzf/hjrinMyfA="),
-				Timestamp: 0,
-				Signature: testonly.MustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="),
+				ID:         testonly.MustB64Decode("CEEUmABxUywWGQRgvPxH/cJlOvopLHKzf/hjrinMyfA="),
+				Timestamp:  0,
+				Extensions: "",
+				Signature:  testonly.MustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="),
 			},
 		},
 	}
