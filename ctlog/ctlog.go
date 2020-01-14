@@ -24,6 +24,7 @@ import (
 	"time"
 
 	ct "github.com/google/certificate-transparency-go"
+	"github.com/google/certificate-transparency-go/logid"
 	"github.com/google/monologue/interval"
 )
 
@@ -32,6 +33,7 @@ type Log struct {
 	Name      string
 	URL       string
 	PublicKey crypto.PublicKey
+	LogID     logid.LogID
 	MMD       time.Duration
 
 	// TemporalInterval represents the interval in which a certificate's
@@ -52,7 +54,12 @@ type Log struct {
 func New(url, name, b64PubKey string, mmd time.Duration, i *interval.Interval) (*Log, error) {
 	pk, err := ct.PublicKeyFromB64(b64PubKey)
 	if err != nil {
-		return nil, fmt.Errorf("ct.PublicKeyFromB64(): %s", err)
+		return nil, fmt.Errorf("ct.PublicKeyFromB64(%s): %s", b64PubKey, err)
+	}
+
+	logID, err := logid.FromPubKeyB64(b64PubKey)
+	if err != nil {
+		return nil, fmt.Errorf("logid.FromPubKeyB64(%s): %s", b64PubKey, err)
 	}
 
 	var ti *interval.Interval
@@ -67,6 +74,7 @@ func New(url, name, b64PubKey string, mmd time.Duration, i *interval.Interval) (
 		Name:             name,
 		URL:              url,
 		PublicKey:        pk,
+		LogID:            logID,
 		MMD:              mmd,
 		TemporalInterval: ti,
 	}, nil
