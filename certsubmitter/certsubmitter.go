@@ -24,6 +24,7 @@ import (
 
 	"github.com/golang/glog"
 	ct "github.com/google/certificate-transparency-go"
+	"github.com/google/certificate-transparency-go/logid"
 	"github.com/google/certificate-transparency-go/schedule"
 	"github.com/google/monologue/apicall"
 	"github.com/google/monologue/certgen"
@@ -62,7 +63,7 @@ func Run(ctx context.Context, lc *client.LogClient, ca *certgen.CA, st storage.A
 		}
 
 		// Verify the SCT.
-		errs := checkSCT(sct)
+		errs := checkSCT(sct, l)
 
 		// Log any errors found.
 		if len(errs) != 0 {
@@ -80,7 +81,7 @@ func Run(ctx context.Context, lc *client.LogClient, ca *certgen.CA, st storage.A
 	glog.Infof("%s: %s: stopped", l.URL, logStr)
 }
 
-func checkSCT(sct *ct.SignedCertificateTimestamp) []error {
+func checkSCT(sct *ct.SignedCertificateTimestamp, l *ctlog.Log) []error {
 	var errs []error
 
 	// Check that the SCT is version 1.
@@ -97,6 +98,12 @@ func checkSCT(sct *ct.SignedCertificateTimestamp) []error {
 		errs = append(errs, &NotV1Error{Version: sct.SCTVersion})
 	}
 
+	// Check that the Log ID is the ID of the Log that the SCT was received
+	// from.
+	if sct.LogID.KeyID != l.LogID {
+		errs = append(errs, &LogIDError{GotID: sct.LogID.KeyID, WantID: l.LogID})
+	}
+
 	// TODO(katjoyce): Implement other SCT checks.
 
 	return errs
@@ -108,4 +115,14 @@ type NotV1Error struct {
 
 func (e *NotV1Error) Error() string {
 	return fmt.Sprintf("version is %v, not v1(0)", e.Version)
+}
+
+// LogIDError indicates that an SCT contained the wrong Log ID.
+type LogIDError struct {
+	GotID  logid.LogID
+	WantID logid.LogID
+}
+
+func (e *LogIDError) Error() string {
+	return fmt.Sprintf("Log ID is %s, want %s", e.GotID, e.WantID)
 }
