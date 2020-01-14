@@ -17,6 +17,7 @@
 package certsubmitter
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"strings"
@@ -104,6 +105,17 @@ func checkSCT(sct *ct.SignedCertificateTimestamp, l *ctlog.Log) []error {
 		errs = append(errs, &SCTLogIDError{Got: sct.LogID.KeyID, Want: l.LogID})
 	}
 
+	// Check that Extensions in the SCT is empty.
+	//
+	// Section 3.2 of RFC 6962 says '"extensions" are future extensions to this
+	// protocol version (v1)', but then goes on to say 'Currently, no extensions
+	// are specified' and Section 4.1 says 'Logs should set this to the empty
+	// string'. This is another case where having data in this field may not
+	// count as misbehaviour, but may be note worthy if seen.
+	if sct.Extensions != nil && !bytes.Equal(sct.Extensions, []byte{}) {
+		errs = append(errs, &SCTExtensionsError{Extensions: sct.Extensions})
+	}
+
 	// TODO(katjoyce): Implement other SCT checks.
 
 	return errs
@@ -128,4 +140,14 @@ type SCTLogIDError struct {
 
 func (e *SCTLogIDError) Error() string {
 	return fmt.Sprintf("Log ID is %s, want %s", e.Got, e.Want)
+}
+
+// SCTExtensionsError indicates that an SCT contained unexpected data in its
+// extensions field.
+type SCTExtensionsError struct {
+	Extensions ct.CTExtensions
+}
+
+func (e *SCTExtensionsError) Error() string {
+	return fmt.Sprintf("unexpected extensions data: %v", e.Extensions)
 }
