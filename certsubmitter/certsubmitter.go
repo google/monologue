@@ -95,7 +95,7 @@ func checkSCT(sct *ct.SignedCertificateTimestamp, l *ctlog.Log) []error {
 	// TODO(katjoyce): Add a way to classify errors as 'misbehaviour' vs
 	// 'unexpected behaviour worth noting'.
 	if sct.SCTVersion != ct.V1 {
-		errs = append(errs, &NotV1Error{Version: sct.SCTVersion})
+		errs = append(errs, &V1Error{Version: sct.SCTVersion})
 	}
 
 	// Check that the Log ID is the ID of the Log that the SCT was received
@@ -109,11 +109,12 @@ func checkSCT(sct *ct.SignedCertificateTimestamp, l *ctlog.Log) []error {
 	return errs
 }
 
-type NotV1Error struct {
+// V1Error indicates that an SCT contained a version that was not v1.
+type V1Error struct {
 	Version ct.Version
 }
 
-func (e *NotV1Error) Error() string {
+func (e *V1Error) Error() string {
 	return fmt.Sprintf("version is %v, not v1(0)", e.Version)
 }
 

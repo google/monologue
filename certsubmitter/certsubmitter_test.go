@@ -56,7 +56,7 @@ func TestCheckSCT(t *testing.T) {
 				Signature:  testonly.MustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="),
 			},
 			wantErrTypes: []reflect.Type{
-				reflect.TypeOf(&NotV1Error{}),
+				reflect.TypeOf(&V1Error{}),
 			},
 		},
 		{
