@@ -95,13 +95,13 @@ func checkSCT(sct *ct.SignedCertificateTimestamp, l *ctlog.Log) []error {
 	// TODO(katjoyce): Add a way to classify errors as 'misbehaviour' vs
 	// 'unexpected behaviour worth noting'.
 	if sct.SCTVersion != ct.V1 {
-		errs = append(errs, &NotV1Error{Version: sct.SCTVersion})
+		errs = append(errs, &SCTVersionError{Got: sct.SCTVersion, Want: ct.V1})
 	}
 
 	// Check that the Log ID is the ID of the Log that the SCT was received
 	// from.
 	if sct.LogID.KeyID != l.LogID {
-		errs = append(errs, &LogIDError{GotID: sct.LogID.KeyID, WantID: l.LogID})
+		errs = append(errs, &SCTLogIDError{Got: sct.LogID.KeyID, Want: l.LogID})
 	}
 
 	// TODO(katjoyce): Implement other SCT checks.
@@ -109,20 +109,23 @@ func checkSCT(sct *ct.SignedCertificateTimestamp, l *ctlog.Log) []error {
 	return errs
 }
 
-type NotV1Error struct {
-	Version ct.Version
+// SCTVersionError indicates that an SCT contained a version that was not as
+// expected.
+type SCTVersionError struct {
+	Got  ct.Version
+	Want ct.Version
 }
 
-func (e *NotV1Error) Error() string {
-	return fmt.Sprintf("version is %v, not v1(0)", e.Version)
+func (e *SCTVersionError) Error() string {
+	return fmt.Sprintf("version is %v, want %v", e.Got, e.Want)
 }
 
-// LogIDError indicates that an SCT contained the wrong Log ID.
-type LogIDError struct {
-	GotID  logid.LogID
-	WantID logid.LogID
+// SCTLogIDError indicates that an SCT contained the wrong Log ID.
+type SCTLogIDError struct {
+	Got  logid.LogID
+	Want logid.LogID
 }
 
-func (e *LogIDError) Error() string {
-	return fmt.Sprintf("Log ID is %s, want %s", e.GotID, e.WantID)
+func (e *SCTLogIDError) Error() string {
+	return fmt.Sprintf("Log ID is %s, want %s", e.Got, e.Want)
 }
