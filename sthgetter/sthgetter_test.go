@@ -21,6 +21,7 @@ import (
 
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/monologue/ctlog"
+	"github.com/google/monologue/errors"
 	"github.com/google/monologue/testonly"
 )
 
@@ -75,7 +76,7 @@ func TestCheckSTH(t *testing.T) {
 			},
 			receivedAt: validReceiveTime,
 			wantErrTypes: []reflect.Type{
-				reflect.TypeOf(&SignatureVerificationError{}),
+				reflect.TypeOf(&errors.SignatureVerificationError{}),
 			},
 		},
 		{
@@ -95,7 +96,7 @@ func TestCheckSTH(t *testing.T) {
 			},
 			receivedAt: invalidReceiveTime,
 			wantErrTypes: []reflect.Type{
-				reflect.TypeOf(&SignatureVerificationError{}),
+				reflect.TypeOf(&errors.SignatureVerificationError{}),
 				reflect.TypeOf(&OldTimestampError{}),
 			},
 		},

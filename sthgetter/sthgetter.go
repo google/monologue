@@ -28,6 +28,7 @@ import (
 	"github.com/google/monologue/apicall"
 	"github.com/google/monologue/client"
 	"github.com/google/monologue/ctlog"
+	"github.com/google/monologue/errors"
 	"github.com/google/monologue/storage"
 )
 
@@ -98,7 +99,7 @@ func checkSTH(sth *ct.SignedTreeHead, receivedAt time.Time, sv *ct.SignatureVeri
 	// Check that the STH signature verifies.
 	glog.Infof("%s: %s: verifying STH signature...", l.URL, logStr)
 	if err := sv.VerifySTHSignature(*sth); err != nil {
-		errs = append(errs, &SignatureVerificationError{Err: err})
+		errs = append(errs, &errors.SignatureVerificationError{Err: err})
 		glog.Warningf("%s: %s: STH signature verification failed", l.URL, logStr)
 	}
 
@@ -130,17 +131,6 @@ func checkSTHTimestamp(sth *ct.SignedTreeHead, receivedAt time.Time, mmd time.Du
 		return fmt.Errorf("STH timestamp %v is more than %v before %v", sthTimestamp, mmd, receivedAt)
 	}
 	return nil
-}
-
-// SignatureVerificationError indicates that an STH signature did not validate.
-// TODO(katjoyce): Work out whether there's any info that should be saved
-// separately in these error types.
-type SignatureVerificationError struct {
-	Err error
-}
-
-func (e *SignatureVerificationError) Error() string {
-	return e.Err.Error()
 }
 
 // OldTimestampError indicates that an STH was older than the MMD of the Log.

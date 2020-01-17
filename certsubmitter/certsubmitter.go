@@ -25,12 +25,15 @@ import (
 
 	"github.com/golang/glog"
 	ct "github.com/google/certificate-transparency-go"
+	"github.com/google/certificate-transparency-go/ctutil"
 	"github.com/google/certificate-transparency-go/logid"
 	"github.com/google/certificate-transparency-go/schedule"
+	"github.com/google/certificate-transparency-go/x509"
 	"github.com/google/monologue/apicall"
 	"github.com/google/monologue/certgen"
 	"github.com/google/monologue/client"
 	"github.com/google/monologue/ctlog"
+	"github.com/google/monologue/errors"
 	"github.com/google/monologue/storage"
 )
 
@@ -39,7 +42,7 @@ const logStr = "Certificate Submitter"
 // Run runs a Certificate Submitter, which periodically issues a certificate or
 // pre-certificate, submits it to a CT Log, and checks and stores the SCT that
 // the Log returns.
-func Run(ctx context.Context, lc *client.LogClient, ca *certgen.CA, st storage.APICallWriter, l *ctlog.Log, period time.Duration) {
+func Run(ctx context.Context, lc *client.LogClient, ca *certgen.CA, sv *ct.SignatureVerifier, st storage.APICallWriter, l *ctlog.Log, period time.Duration) {
 	glog.Infof("%s: %s: started with period %v", l.URL, logStr, period)
 
 	schedule.Every(ctx, period, func(ctx context.Context) {
@@ -64,7 +67,7 @@ func Run(ctx context.Context, lc *client.LogClient, ca *certgen.CA, st storage.A
 		}
 
 		// Verify the SCT.
-		errs := checkSCT(sct, l)
+		errs := checkSCT(sct, chain, sv, l)
 
 		// Log any errors found.
 		if len(errs) != 0 {
@@ -82,7 +85,7 @@ func Run(ctx context.Context, lc *client.LogClient, ca *certgen.CA, st storage.A
 	glog.Infof("%s: %s: stopped", l.URL, logStr)
 }
 
-func checkSCT(sct *ct.SignedCertificateTimestamp, l *ctlog.Log) []error {
+func checkSCT(sct *ct.SignedCertificateTimestamp, chain []*x509.Certificate, sv *ct.SignatureVerifier, l *ctlog.Log) []error {
 	var errs []error
 
 	// Check that the SCT is version 1.
@@ -114,6 +117,11 @@ func checkSCT(sct *ct.SignedCertificateTimestamp, l *ctlog.Log) []error {
 	// count as misbehaviour, but may be note worthy if seen.
 	if sct.Extensions != nil && !bytes.Equal(sct.Extensions, []byte{}) {
 		errs = append(errs, &SCTExtensionsError{Extensions: sct.Extensions})
+	}
+
+	// Verify the signature of the SCT.
+	if err := ctutil.VerifySCTWithVerifier(sv, chain, sct, false); err != nil {
+		errs = append(errs, &errors.SignatureVerificationError{Err: err})
 	}
 
 	// TODO(katjoyce): Implement other SCT checks.

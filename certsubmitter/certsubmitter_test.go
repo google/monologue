@@ -21,7 +21,9 @@ import (
 
 	ct "github.com/google/certificate-transparency-go"
 	"github.com/google/monologue/ctlog"
+	"github.com/google/monologue/errors"
 	"github.com/google/monologue/interval"
+	"github.com/google/monologue/testdata"
 	"github.com/google/monologue/testonly"
 )
 
@@ -37,11 +39,6 @@ var (
 )
 
 func TestCheckSCT(t *testing.T) {
-	ctl, err := ctlog.New(url, name, pubKey, mmd, tempInt)
-	if err != nil {
-		t.Fatalf("ctlog.New(%s, %s, %s, %s, %v) = _, %s", url, name, pubKey, mmd, tempInt, err)
-	}
-
 	tests := []struct {
 		desc         string
 		sct          *ct.AddChainResponse
@@ -52,45 +49,72 @@ func TestCheckSCT(t *testing.T) {
 			sct: &ct.AddChainResponse{
 				SCTVersion: 1,
 				ID:         testonly.MustB64Decode("CEEUmABxUywWGQRgvPxH/cJlOvopLHKzf/hjrinMyfA="),
-				Timestamp:  0,
+				Timestamp:  1512556025588,
 				Signature:  testonly.MustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="),
 			},
 			wantErrTypes: []reflect.Type{
 				reflect.TypeOf(&SCTVersionError{}),
+				reflect.TypeOf(&errors.SignatureVerificationError{}), // Version is covered by the SCT signature, so changing the version also invalidates the signature.
 			},
 		},
 		{
 			desc: "SCT contains wrong LogID",
 			sct: &ct.AddChainResponse{
 				ID:        testonly.MustB64Decode("B7dcG+V9aP/xsMYdIxXHuuZXfFeUt2ruvGE6GmnTohw="),
-				Timestamp: 0,
+				Timestamp: 1512556025588,
 				Signature: testonly.MustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="),
 			},
 			wantErrTypes: []reflect.Type{
-				reflect.TypeOf(&SCTLogIDError{}),
+				reflect.TypeOf(&SCTLogIDError{}), // Log ID is not covered by the SCT signature.
 			},
 		},
 		{
 			desc: "SCT contains extensions data",
 			sct: &ct.AddChainResponse{
 				ID:         testonly.MustB64Decode("CEEUmABxUywWGQRgvPxH/cJlOvopLHKzf/hjrinMyfA="),
-				Timestamp:  0,
+				Timestamp:  1512556025588,
 				Extensions: "data",
 				Signature:  testonly.MustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="),
 			},
 			wantErrTypes: []reflect.Type{
 				reflect.TypeOf(&SCTExtensionsError{}),
+				reflect.TypeOf(&errors.SignatureVerificationError{}), // Extensions field is covered by the SCT signature, so changing the extensions data also invalidates the signature.
+
+			},
+		},
+		{
+			desc: "SCT signature doesn't verify",
+			sct: &ct.AddChainResponse{
+				ID:         testonly.MustB64Decode("CEEUmABxUywWGQRgvPxH/cJlOvopLHKzf/hjrinMyfA="),
+				Timestamp:  1512556025588,
+				Extensions: "",
+				Signature:  testonly.MustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3D="), // Last alpha-numeric character Q has been changed to D, so signature is now invalid.
+			},
+			wantErrTypes: []reflect.Type{
+				reflect.TypeOf(&errors.SignatureVerificationError{}),
 			},
 		},
 		{
 			desc: "no errors",
 			sct: &ct.AddChainResponse{
 				ID:         testonly.MustB64Decode("CEEUmABxUywWGQRgvPxH/cJlOvopLHKzf/hjrinMyfA="),
-				Timestamp:  0,
+				Timestamp:  1512556025588,
 				Extensions: "",
 				Signature:  testonly.MustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="),
 			},
 		},
+	}
+
+	ctl, err := ctlog.New(url, name, pubKey, mmd, tempInt)
+	if err != nil {
+		t.Fatalf("ctlog.New(%s, %s, %s, %s, %v) = _, %s", url, name, pubKey, mmd, tempInt, err)
+	}
+
+	chain := testonly.MustCreateChain([]string{testdata.LeafCertPEM, testdata.IntermediateCertPEM, testdata.RootCertPEM})
+
+	sv, err := ct.NewSignatureVerifier(ctl.PublicKey)
+	if err != nil {
+		t.Errorf("couldn't create signature verifier: %s", err)
 	}
 
 	for _, test := range tests {
@@ -100,7 +124,7 @@ func TestCheckSCT(t *testing.T) {
 				t.Fatalf("error converting ct.AddChainResponse to ct.SignedCertificateTimestamp: %s", err)
 			}
 
-			errs := checkSCT(sct, ctl)
+			errs := checkSCT(sct, chain, sv, ctl)
 			if len(errs) != len(test.wantErrTypes) {
 				t.Fatalf("checkSCT(%v) = %v (%d errors), want errors of types %v (%d errors)", sct, errs, len(errs), test.wantErrTypes, len(test.wantErrTypes))
 			}
