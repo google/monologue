@@ -16,7 +16,13 @@
 // monologue packages.
 package testonly
 
-import "encoding/base64"
+import (
+	"encoding/base64"
+	"fmt"
+
+	"github.com/google/certificate-transparency-go/x509"
+	"github.com/google/certificate-transparency-go/x509util"
+)
 
 func MustB64Decode(b64 string) []byte {
 	b, err := base64.StdEncoding.DecodeString(b64)
@@ -24,4 +30,16 @@ func MustB64Decode(b64 string) []byte {
 		panic(err)
 	}
 	return b
+}
+
+func MustCreateChain(pemChain []string) []*x509.Certificate {
+	var chain []*x509.Certificate
+	for _, pc := range pemChain {
+		cert, err := x509util.CertificateFromPEM([]byte(pc))
+		if err != nil {
+			panic(fmt.Errorf("unable to parse from PEM to *x509.Certificate: %s", err))
+		}
+		chain = append(chain, cert)
+	}
+	return chain
 }

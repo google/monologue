@@ -98,7 +98,7 @@ func Run(ctx context.Context, cfg *Config, cl *http.Client, st Storage) error {
 	if cfg.AddChainPeriod > 0 {
 		wg.Add(1)
 		go func() {
-			certsubmitter.Run(ctx, lc, cfg.CA, st, cfg.Log, cfg.AddChainPeriod)
+			certsubmitter.Run(ctx, lc, cfg.CA, sv, st, cfg.Log, cfg.AddChainPeriod)
 			wg.Done()
 		}()
 	}
