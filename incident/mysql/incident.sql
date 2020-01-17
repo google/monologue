@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS Incidents(
 CREATE INDEX TimestampIndex ON Incidents(Timestamp);
 CREATE INDEX SourceIndex ON Incidents(Source);
 CREATE INDEX BaseURLIndex ON Incidents(BaseURL);
-// Indexing the whole Summary field exceeds the 3K key limit on multi-byte
-// character sets.
+# Indexing the whole Summary field exceeds the 3K key limit on multi-byte
+# character sets.
 CREATE INDEX SummaryIndex ON Incidents(Summary(512));
 CREATE INDEX FullURLIndex ON Incidents(FullURL);
 CREATE INDEX CategoryIndex ON Incidents(Category);
