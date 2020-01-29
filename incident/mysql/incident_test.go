@@ -76,15 +76,15 @@ func TestLogf(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to build MySQLReporter: %v", err)
 	}
-	e := entry{BaseURL: "base", Summary: "summary", Category: "signature", FullURL: "full", Details: "blah"}
+	e := entry{BaseURL: "base", Summary: "summary", Category: "signature", IsViolation: true, FullURL: "full", Details: "blah"}
 
-	reporter.Log(ctx, e.BaseURL, e.Summary, e.Category, e.FullURL, e.Details)
+	reporter.Log(ctx, e.BaseURL, e.Summary, e.Category, e.IsViolation, e.FullURL, e.Details)
 	checkContents(ctx, t, []entry{e})
 
-	reporter.Log(ctx, e.BaseURL, e.Summary, e.Category, e.FullURL, e.Details)
+	reporter.Log(ctx, e.BaseURL, e.Summary, e.Category, e.IsViolation, e.FullURL, e.Details)
 	checkContents(ctx, t, []entry{e, e})
 
-	reporter.Logf(ctx, e.BaseURL, e.Summary, e.Category, e.FullURL, "%s", e.Details)
+	reporter.Logf(ctx, e.BaseURL, e.Summary, e.Category, e.IsViolation, e.FullURL, "%s", e.Details)
 	checkContents(ctx, t, []entry{e, e, e})
 }
 

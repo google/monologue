@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS Incidents(
   BaseURL VARCHAR(512),
   Summary VARCHAR(2048),
   Category VARCHAR(512),
+  IsViolation BOOLEAN,
   FullURL VARCHAR(512),
   Details TEXT,
   -- OwningId indicates that an incident is considered a sub-incident of the owning incident.

@@ -35,7 +35,7 @@ type mysqlReporter struct {
 // in a MySQL database, all of which will be marked as emanating from the given
 // source.
 func NewMySQLReporter(ctx context.Context, db *sql.DB, source string) (incident.Reporter, error) {
-	stmt, err := db.PrepareContext(ctx, "INSERT INTO Incidents(Timestamp, Source, BaseURL, Summary, Category, FullURL, Details) VALUES (?, ?, ?, ?, ?, ?, ?);")
+	stmt, err := db.PrepareContext(ctx, "INSERT INTO Incidents(Timestamp, Source, BaseURL, Summary, Category, IsViolation, FullURL, Details) VALUES (?, ?, ?, ?, ?, ?, ?);")
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare context for %q: %v", source, err)
 	}
@@ -43,16 +43,16 @@ func NewMySQLReporter(ctx context.Context, db *sql.DB, source string) (incident.
 }
 
 // Log records an incident with the given details.
-func (m *mysqlReporter) Log(ctx context.Context, baseURL, summary, category, fullURL, details string) {
+func (m *mysqlReporter) Log(ctx context.Context, baseURL, summary, category string, isViolation bool, fullURL, details string) {
 	now := time.Now()
-	glog.Errorf("[%s] %s: %s (category=%s url=%s)\n  %s", now, baseURL, summary, category, fullURL, details)
-	if _, err := m.stmt.ExecContext(ctx, now, m.source, baseURL, summary, category, fullURL, details); err != nil {
+	glog.Errorf("[%s] %s: %s (category=%s url=%s)\n  %s", now, baseURL, summary, category, isViolation, fullURL, details)
+	if _, err := m.stmt.ExecContext(ctx, now, m.source, baseURL, summary, category, isViolation, fullURL, details); err != nil {
 		glog.Errorf("failed to insert incident for %q: %v", m.source, err)
 	}
 }
 
 // Logf records an incident with the given details and formatting.
-func (m *mysqlReporter) Logf(ctx context.Context, baseURL, summary, category, fullURL, detailsFmt string, args ...interface{}) {
+func (m *mysqlReporter) Logf(ctx context.Context, baseURL, summary, category string, isViolation bool, fullURL, detailsFmt string, args ...interface{}) {
 	details := fmt.Sprintf(detailsFmt, args...)
-	m.Log(ctx, baseURL, summary, category, fullURL, details)
+	m.Log(ctx, baseURL, summary, category, isViolation, fullURL, details)
 }
