@@ -35,7 +35,7 @@ type mysqlReporter struct {
 // in a MySQL database, all of which will be marked as emanating from the given
 // source.
 func NewMySQLReporter(ctx context.Context, db *sql.DB, source string) (incident.Reporter, error) {
-	stmt, err := db.PrepareContext(ctx, "INSERT INTO Incidents(Timestamp, Source, BaseURL, Summary, Category, IsViolation, FullURL, Details) VALUES (?, ?, ?, ?, ?, ?, ?);")
+	stmt, err := db.PrepareContext(ctx, "INSERT INTO Incidents(Timestamp, Source, BaseURL, Summary, Category, IsViolation, FullURL, Details) VALUES (?, ?, ?, ?, ?, ?, ?, ?);")
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare context for %q: %v", source, err)
 	}
