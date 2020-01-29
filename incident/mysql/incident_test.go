@@ -33,7 +33,9 @@ import (
 )
 
 type entry struct {
-	BaseURL, Summary, Category string, IsViolation bool, FullURL, Details string
+	BaseURL, Summary, Category string
+	IsViolation                bool
+	FullURL, Details           string
 }
 
 func checkContents(ctx context.Context, t *testing.T, want []entry) {
@@ -77,7 +79,7 @@ func TestLogf(t *testing.T) {
 		t.Fatalf("failed to build MySQLReporter: %v", err)
 	}
 	e := entry{BaseURL: "base", Summary: "summary", Category: "signature", IsViolation: false, FullURL: "full", Details: "blah"}
-	ev := entry{BaseURL: "base", Summary: "summary", Category: "signature", IssViolation: true, FullURL: "full", Details: "blah"}
+	ev := entry{BaseURL: "base", Summary: "summary", Category: "signature", IsViolation: true, FullURL: "full", Details: "blah"}
 
 	reporter.LogViolation(ctx, e.BaseURL, e.Summary, e.Category, e.FullURL, e.Details)
 	checkContents(ctx, t, []entry{ev})

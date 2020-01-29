@@ -30,8 +30,6 @@ type Reporter interface {
 	// multiple similar incidents to allow aggregation. Information that
 	// varies between instances of the 'same' incident should be included in
 	// the fullURL or details field.
-	// isViolation helps distinguish between violation reports and state-updates
-	// including root changes.
 	LogUpdate(ctx context.Context, baseURL, summary, category, fullURL, details string)
 	LogUpdatef(ctx context.Context, baseURL, summary, category, fullURL, detailsFmt string, args ...interface{})
 
