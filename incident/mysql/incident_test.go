@@ -76,16 +76,17 @@ func TestLogf(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to build MySQLReporter: %v", err)
 	}
-	e := entry{BaseURL: "base", Summary: "summary", Category: "signature", IsViolation: true, FullURL: "full", Details: "blah"}
+	e := entry{BaseURL: "base", Summary: "summary", Category: "signature", isViolation: false, FullURL: "full", Details: "blah"}
+	ev := entry{BaseURL: "base", Summary: "summary", Category: "signature", isViolation: true, FullURL: "full", Details: "blah"}
 
-	reporter.Log(ctx, e.BaseURL, e.Summary, e.Category, e.IsViolation, e.FullURL, e.Details)
-	checkContents(ctx, t, []entry{e})
+	reporter.LogViolation(ctx, e.BaseURL, e.Summary, e.Category, e.FullURL, e.Details)
+	checkContents(ctx, t, []entry{ev})
 
-	reporter.Log(ctx, e.BaseURL, e.Summary, e.Category, e.IsViolation, e.FullURL, e.Details)
-	checkContents(ctx, t, []entry{e, e})
+	reporter.LogUpdate(ctx, e.BaseURL, e.Summary, e.Category, e.FullURL, e.Details)
+	checkContents(ctx, t, []entry{ev, e})
 
-	reporter.Logf(ctx, e.BaseURL, e.Summary, e.Category, e.IsViolation, e.FullURL, "%s", e.Details)
-	checkContents(ctx, t, []entry{e, e, e})
+	reporter.LogViolationf(ctx, e.BaseURL, e.Summary, e.Category, e.FullURL, "%s", e.Details)
+	checkContents(ctx, t, []entry{ev, e, ev})
 }
 
 func TestMain(m *testing.M) {

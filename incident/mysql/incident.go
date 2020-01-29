@@ -42,17 +42,32 @@ func NewMySQLReporter(ctx context.Context, db *sql.DB, source string) (incident.
 	return &mysqlReporter{db: db, source: source, stmt: stmt}, nil
 }
 
-// Log records an incident with the given details.
-func (m *mysqlReporter) Log(ctx context.Context, baseURL, summary, category string, isViolation bool, fullURL, details string) {
+// LogUpdate records an incident with the given details.
+func (m *mysqlReporter) LogUpdate(ctx context.Context, baseURL, summary, category, fullURL, details string) {
 	now := time.Now()
 	glog.Errorf("[%s] %s: %s (category=%s url=%s)\n  %s", now, baseURL, summary, category, isViolation, fullURL, details)
-	if _, err := m.stmt.ExecContext(ctx, now, m.source, baseURL, summary, category, isViolation, fullURL, details); err != nil {
+	if _, err := m.stmt.ExecContext(ctx, now, m.source, baseURL, summary, category, false /* isViolation */, fullURL, details); err != nil {
 		glog.Errorf("failed to insert incident for %q: %v", m.source, err)
 	}
 }
 
-// Logf records an incident with the given details and formatting.
-func (m *mysqlReporter) Logf(ctx context.Context, baseURL, summary, category string, isViolation bool, fullURL, detailsFmt string, args ...interface{}) {
+// LogViolation records an incident with the given details.
+func (m *mysqlReporter) LogViolation(ctx context.Context, baseURL, summary, category, fullURL, details string) {
+	now := time.Now()
+	glog.Errorf("[%s] %s: %s (category=%s url=%s)\n  %s", now, baseURL, summary, category, isViolation, fullURL, details)
+	if _, err := m.stmt.ExecContext(ctx, now, m.source, baseURL, summary, category, true /* isViolation */, fullURL, details); err != nil {
+		glog.Errorf("failed to insert incident for %q: %v", m.source, err)
+	}
+}
+
+// LogUpdatef records an incident with the given details and formatting.
+func (m *mysqlReporter) LogUpdatef(ctx context.Context, baseURL, summary, category, fullURL, detailsFmt string, args ...interface{}) {
 	details := fmt.Sprintf(detailsFmt, args...)
-	m.Log(ctx, baseURL, summary, category, isViolation, fullURL, details)
+	m.LogUpdate(ctx, baseURL, summary, category, fullURL, details)
+}
+
+// LogUpdatef records an incident with the given details and formatting.
+func (m *mysqlReporter) LogViolationf(ctx context.Context, baseURL, summary, category, fullURL, detailsFmt string, args ...interface{}) {
+	details := fmt.Sprintf(detailsFmt, args...)
+	m.LogViolation(ctx, baseURL, summary, category, fullURL, details)
 }
