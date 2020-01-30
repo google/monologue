@@ -10,6 +10,10 @@ env:
 
 jobs:
   include:
+    - name: go mod tidy
+      install: skip
+      before_script: go mod tidy -v
+      script: git diff --exit-code -- go.mod go.sum
     - name: test with coverage
       env:
         - WITH_COVERAGE=true
