@@ -1,13 +1,18 @@
+version: ~> 1.0
 language: go
-
-env:
-  - WITH_COVERAGE=true
-  - GOFLAGS='-race'
-
 go_import_path: github.com/google/monologue
 
-matrix:
-  fast_finish: true
+jobs:
+  include:
+    - name: test with coverage
+      env:
+        - WITH_COVERAGE=true
+      after_success:
+        # Upload coverage info as per https://docs.codecov.io/docs/about-the-codecov-bash-uploader
+        - bash <(curl -s https://codecov.io/bash)
+    - name: test with race detection
+      env:
+        - GOFLAGS='-race'
 
 install:
   - go get -d -t ./...
@@ -19,6 +24,3 @@ script:
   - ./scripts/presubmit.sh ${WITH_COVERAGE:+--coverage}
   - set +e
 
-after_success:
-  # Upload coverage info as per https://docs.codecov.io/docs/about-the-codecov-bash-uploader
-  - bash <(curl -s https://codecov.io/bash)
