@@ -38,7 +38,7 @@ type Storage interface {
 	storage.RootsWriter
 }
 
-// Run starts an STH Getter, which periodically queries a Log for its set of acceptable root certificates and stores them.
+// Run starts a Roots Getter, which periodically queries a Log for its set of acceptable root certificates and stores them.
 func Run(ctx context.Context, lc *client.LogClient, st Storage, l *ctlog.Log, period time.Duration) {
 	glog.Infof("%s: %s: started with period %v", l.URL, logStr, period)
 
