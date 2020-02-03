@@ -4,6 +4,10 @@ go_import_path: github.com/google/monologue
 go:
   - 1.13
 
+cache:
+  directories:
+    - $GOPATH/pkg/mod
+
 env:
   global:
     - GO111MODULE=on
