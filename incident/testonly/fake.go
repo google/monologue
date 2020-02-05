@@ -24,7 +24,6 @@ import (
 type Report struct {
 	BaseURL  string
 	Summary  string
-	Category string
 	FullURL  string
 	Details  string
 }
@@ -36,33 +35,31 @@ type FakeReporter struct {
 }
 
 // LogUpdate sends an incident report to the FakeReporter's Updates channel.
-func (f *FakeReporter) LogUpdate(ctx context.Context, baseURL, summary, category, fullURL, details string) {
+func (f *FakeReporter) LogUpdate(ctx context.Context, baseURL, summary, fullURL, details string) {
 	f.Updates <- Report{
 		BaseURL:  baseURL,
 		Summary:  summary,
-		Category: category,
 		FullURL:  fullURL,
 		Details:  details,
 	}
 }
 
 // LogUpdatef sends an incident report to the FakeReporter's Updates channel, formatting parameters along the way.
-func (f *FakeReporter) LogUpdatef(ctx context.Context, baseURL, summary, category, fullURL, detailsFmt string, args ...interface{}) {
-	f.LogUpdate(ctx, baseURL, summary, category, fullURL, fmt.Sprintf(detailsFmt, args...))
+func (f *FakeReporter) LogUpdatef(ctx context.Context, baseURL, summary, fullURL, detailsFmt string, args ...interface{}) {
+	f.LogUpdate(ctx, baseURL, summary, fullURL, fmt.Sprintf(detailsFmt, args...))
 }
 
 // LogViolation sends an incident report to the FakeReporter's Violations channel.
-func (f *FakeReporter) LogViolation(ctx context.Context, baseURL, summary, category, fullURL, details string) {
+func (f *FakeReporter) LogViolation(ctx context.Context, baseURL, summary, fullURL, details string) {
 	f.Violations <- Report{
 		BaseURL:  baseURL,
 		Summary:  summary,
-		Category: category,
 		FullURL:  fullURL,
 		Details:  details,
 	}
 }
 
 // LogViolationf sends an incident report to the FakeReporter's Violations channel, formatting parameters along the way.
-func (f *FakeReporter) LogViolationf(ctx context.Context, baseURL, summary, category, fullURL, detailsFmt string, args ...interface{}) {
-	f.LogViolation(ctx, baseURL, summary, category, fullURL, fmt.Sprintf(detailsFmt, args...))
+func (f *FakeReporter) LogViolationf(ctx context.Context, baseURL, summary, fullURL, detailsFmt string, args ...interface{}) {
+	f.LogViolation(ctx, baseURL, summary, fullURL, fmt.Sprintf(detailsFmt, args...))
 }
