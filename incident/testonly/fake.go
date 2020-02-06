@@ -22,10 +22,10 @@ import (
 
 // Report contains all of the information submitted when creating an incident report.
 type Report struct {
-	BaseURL  string
-	Summary  string
-	FullURL  string
-	Details  string
+	BaseURL string
+	Summary string
+	FullURL string
+	Details string
 }
 
 // FakeReporter sends incident reports to its Reports channel.
@@ -37,10 +37,10 @@ type FakeReporter struct {
 // LogUpdate sends an incident report to the FakeReporter's Updates channel.
 func (f *FakeReporter) LogUpdate(ctx context.Context, baseURL, summary, fullURL, details string) {
 	f.Updates <- Report{
-		BaseURL:  baseURL,
-		Summary:  summary,
-		FullURL:  fullURL,
-		Details:  details,
+		BaseURL: baseURL,
+		Summary: summary,
+		FullURL: fullURL,
+		Details: details,
 	}
 }
 
@@ -52,10 +52,10 @@ func (f *FakeReporter) LogUpdatef(ctx context.Context, baseURL, summary, fullURL
 // LogViolation sends an incident report to the FakeReporter's Violations channel.
 func (f *FakeReporter) LogViolation(ctx context.Context, baseURL, summary, fullURL, details string) {
 	f.Violations <- Report{
-		BaseURL:  baseURL,
-		Summary:  summary,
-		FullURL:  fullURL,
-		Details:  details,
+		BaseURL: baseURL,
+		Summary: summary,
+		FullURL: fullURL,
+		Details: details,
 	}
 }
 

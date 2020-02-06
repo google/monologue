@@ -33,9 +33,9 @@ import (
 )
 
 type entry struct {
-	BaseURL, Summary  string
-	IsViolation       bool
-	FullURL, Details  string
+	BaseURL, Summary string
+	IsViolation      bool
+	FullURL, Details string
 }
 
 func checkContents(ctx context.Context, t *testing.T, want []entry) {

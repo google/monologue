@@ -76,10 +76,9 @@ func TestRootsChanged(t *testing.T) {
 				rootSetID2: {root1, root2},
 			},
 			wantReport: &itestonly.Report{
-				Summary:  "Root certificates changed",
-				Category: "roots",
-				BaseURL:  "https://ct.googleapis.com/testtube/",
-				FullURL:  "https://ct.googleapis.com/testtube/ct/v1/get-roots",
+				Summary: "Root certificates changed",
+				BaseURL: "https://ct.googleapis.com/testtube/",
+				FullURL: "https://ct.googleapis.com/testtube/ct/v1/get-roots",
 				Details: `The root certificates accepted by testtube (https://ct.googleapis.com/testtube/) have changed.
 
 Certificates added (1):
@@ -95,10 +94,9 @@ CN=A-Trust-Qual-02,OU=A-Trust-Qual-02,O=A-Trust Ges. f. Sicherheitssysteme im el
 				rootSetID2: {root1, root2},
 			},
 			wantReport: &itestonly.Report{
-				Summary:  "Root certificates changed",
-				Category: "roots",
-				BaseURL:  "https://ct.googleapis.com/testtube/",
-				FullURL:  "https://ct.googleapis.com/testtube/ct/v1/get-roots",
+				Summary: "Root certificates changed",
+				BaseURL: "https://ct.googleapis.com/testtube/",
+				FullURL: "https://ct.googleapis.com/testtube/ct/v1/get-roots",
 				Details: `The root certificates accepted by testtube (https://ct.googleapis.com/testtube/) have changed.
 
 Certificates added (2):
@@ -115,10 +113,9 @@ CN=GLOBALTRUST,OU=GLOBALTRUST Certification Service,O=ARGE DATEN - Austrian Soci
 				rootSetID2: {root1},
 			},
 			wantReport: &itestonly.Report{
-				Summary:  "Root certificates changed",
-				Category: "roots",
-				BaseURL:  "https://ct.googleapis.com/testtube/",
-				FullURL:  "https://ct.googleapis.com/testtube/ct/v1/get-roots",
+				Summary: "Root certificates changed",
+				BaseURL: "https://ct.googleapis.com/testtube/",
+				FullURL: "https://ct.googleapis.com/testtube/ct/v1/get-roots",
 				Details: `The root certificates accepted by testtube (https://ct.googleapis.com/testtube/) have changed.
 
 Certificates removed (1):
@@ -134,10 +131,9 @@ CN=A-Trust-Qual-02,OU=A-Trust-Qual-02,O=A-Trust Ges. f. Sicherheitssysteme im el
 				rootSetID2: {},
 			},
 			wantReport: &itestonly.Report{
-				Summary:  "Root certificates changed",
-				Category: "roots",
-				BaseURL:  "https://ct.googleapis.com/testtube/",
-				FullURL:  "https://ct.googleapis.com/testtube/ct/v1/get-roots",
+				Summary: "Root certificates changed",
+				BaseURL: "https://ct.googleapis.com/testtube/",
+				FullURL: "https://ct.googleapis.com/testtube/ct/v1/get-roots",
 				Details: `The root certificates accepted by testtube (https://ct.googleapis.com/testtube/) have changed.
 
 Certificates removed (2):
@@ -154,10 +150,9 @@ CN=GLOBALTRUST,OU=GLOBALTRUST Certification Service,O=ARGE DATEN - Austrian Soci
 				rootSetID2: {root2},
 			},
 			wantReport: &itestonly.Report{
-				Summary:  "Root certificates changed",
-				Category: "roots",
-				BaseURL:  "https://ct.googleapis.com/testtube/",
-				FullURL:  "https://ct.googleapis.com/testtube/ct/v1/get-roots",
+				Summary: "Root certificates changed",
+				BaseURL: "https://ct.googleapis.com/testtube/",
+				FullURL: "https://ct.googleapis.com/testtube/ct/v1/get-roots",
 				Details: `The root certificates accepted by testtube (https://ct.googleapis.com/testtube/) have changed.
 
 Certificates added (1):
