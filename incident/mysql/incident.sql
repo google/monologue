@@ -4,7 +4,6 @@ CREATE TABLE IF NOT EXISTS Incidents(
   Source VARCHAR(128),
   BaseURL VARCHAR(512),
   Summary VARCHAR(2048),
-  Category VARCHAR(512),
   IsViolation BOOLEAN,
   FullURL VARCHAR(512),
   Details TEXT,
@@ -21,4 +20,3 @@ CREATE INDEX BaseURLIndex ON Incidents(BaseURL);
 # character sets.
 CREATE INDEX SummaryIndex ON Incidents(Summary(512));
 CREATE INDEX FullURLIndex ON Incidents(FullURL);
-CREATE INDEX CategoryIndex ON Incidents(Category);

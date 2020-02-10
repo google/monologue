@@ -153,6 +153,6 @@ func reportChange(ctx context.Context, rep incident.Reporter, l *ctlog.Log, adde
 	}); err != nil {
 		return err
 	}
-	rep.LogUpdate(ctx, l.URL, "Root certificates changed", "roots", fullURL, strBuilder.String())
+	rep.LogUpdate(ctx, l.URL, "Root certificates changed", fullURL, strBuilder.String())
 	return nil
 }

@@ -35,7 +35,7 @@ type mysqlReporter struct {
 // in a MySQL database, all of which will be marked as emanating from the given
 // source.
 func NewMySQLReporter(ctx context.Context, db *sql.DB, source string) (incident.Reporter, error) {
-	stmt, err := db.PrepareContext(ctx, "INSERT INTO Incidents(Timestamp, Source, BaseURL, Summary, Category, IsViolation, FullURL, Details) VALUES (?, ?, ?, ?, ?, ?, ?, ?);")
+	stmt, err := db.PrepareContext(ctx, "INSERT INTO Incidents(Timestamp, Source, BaseURL, Summary, IsViolation, FullURL, Details) VALUES (?, ?, ?, ?, ?, ?, ?, ?);")
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare context for %q: %v", source, err)
 	}
@@ -43,31 +43,31 @@ func NewMySQLReporter(ctx context.Context, db *sql.DB, source string) (incident.
 }
 
 // LogUpdate records an incident with the given details.
-func (m *mysqlReporter) LogUpdate(ctx context.Context, baseURL, summary, category, fullURL, details string) {
+func (m *mysqlReporter) LogUpdate(ctx context.Context, baseURL, summary, fullURL, details string) {
 	now := time.Now()
-	glog.Infof("[%s] %s: %s (category=%s url=%s)\n  %s", now, baseURL, summary, category, fullURL, details)
-	if _, err := m.stmt.ExecContext(ctx, now, m.source, baseURL, summary, category, false /* isViolation */, fullURL, details); err != nil {
+	glog.Errorf("[%s] %s: %s (url=%s)\n  %s", now, baseURL, summary, fullURL, details)
+	if _, err := m.stmt.ExecContext(ctx, now, m.source, baseURL, summary, fullURL, details); err != nil {
 		glog.Errorf("failed to insert incident for %q: %v", m.source, err)
 	}
 }
 
 // LogViolation records an incident with the given details.
-func (m *mysqlReporter) LogViolation(ctx context.Context, baseURL, summary, category, fullURL, details string) {
+func (m *mysqlReporter) LogViolation(ctx context.Context, baseURL, summary, fullURL, details string) {
 	now := time.Now()
-	glog.Infof("[%s] %s: %s (category=%s url=%s)\n  %s", now, baseURL, summary, category, fullURL, details)
-	if _, err := m.stmt.ExecContext(ctx, now, m.source, baseURL, summary, category, true /* isViolation */, fullURL, details); err != nil {
+	glog.Infof("[%s] %s: %s (url=%s)\n  %s", now, baseURL, summary, fullURL, details)
+	if _, err := m.stmt.ExecContext(ctx, now, m.source, baseURL, summary, true /* isViolation */, fullURL, details); err != nil {
 		glog.Errorf("failed to insert incident for %q: %v", m.source, err)
 	}
 }
 
 // LogUpdatef records an incident with the given details and formatting.
-func (m *mysqlReporter) LogUpdatef(ctx context.Context, baseURL, summary, category, fullURL, detailsFmt string, args ...interface{}) {
+func (m *mysqlReporter) LogUpdatef(ctx context.Context, baseURL, summary, fullURL, detailsFmt string, args ...interface{}) {
 	details := fmt.Sprintf(detailsFmt, args...)
-	m.LogUpdate(ctx, baseURL, summary, category, fullURL, details)
+	m.LogUpdate(ctx, baseURL, summary, fullURL, details)
 }
 
 // LogUpdatef records an incident with the given details and formatting.
-func (m *mysqlReporter) LogViolationf(ctx context.Context, baseURL, summary, category, fullURL, detailsFmt string, args ...interface{}) {
+func (m *mysqlReporter) LogViolationf(ctx context.Context, baseURL, summary, fullURL, detailsFmt string, args ...interface{}) {
 	details := fmt.Sprintf(detailsFmt, args...)
-	m.LogViolation(ctx, baseURL, summary, category, fullURL, details)
+	m.LogViolation(ctx, baseURL, summary, fullURL, details)
 }

@@ -33,9 +33,9 @@ import (
 )
 
 type entry struct {
-	BaseURL, Summary, Category string
-	IsViolation                bool
-	FullURL, Details           string
+	BaseURL, Summary string
+	IsViolation      bool
+	FullURL, Details string
 }
 
 func checkContents(ctx context.Context, t *testing.T, want []entry) {
@@ -46,7 +46,7 @@ func checkContents(ctx context.Context, t *testing.T, want []entry) {
 		t.Fatalf("failed to create transaction: %v", err)
 	}
 	defer tx.Commit()
-	rows, err := tx.QueryContext(ctx, "SELECT BaseURL, Summary, Category, FullURL, Details FROM Incidents;")
+	rows, err := tx.QueryContext(ctx, "SELECT BaseURL, Summary, FullURL, Details FROM Incidents;")
 	if err != nil {
 		t.Fatalf("failed to query rows: %v", err)
 	}
@@ -55,7 +55,7 @@ func checkContents(ctx context.Context, t *testing.T, want []entry) {
 	var got []entry
 	for rows.Next() {
 		var e entry
-		if err := rows.Scan(&e.BaseURL, &e.Summary, &e.Category, &e.FullURL, &e.Details); err != nil {
+		if err := rows.Scan(&e.BaseURL, &e.Summary, &e.FullURL, &e.Details); err != nil {
 			t.Fatalf("failed to scan row: %v", err)
 		}
 		got = append(got, e)
@@ -78,17 +78,18 @@ func TestLogf(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to build MySQLReporter: %v", err)
 	}
-	e := entry{BaseURL: "base", Summary: "summary", Category: "signature", IsViolation: false, FullURL: "full", Details: "blah"}
-	ev := entry{BaseURL: "base", Summary: "summary", Category: "signature", IsViolation: true, FullURL: "full", Details: "blah"}
 
-	reporter.LogViolation(ctx, e.BaseURL, e.Summary, e.Category, e.FullURL, e.Details)
-	checkContents(ctx, t, []entry{ev})
+	e := entry{BaseURL: "base", Summary: "summary", IsViolation: false, FullURL: "full", Details: "blah"}
+	ev := entry{BaseURL: "base", Summary: "summary", IsViolation: true, FullURL: "full", Details: "blah"}
 
-	reporter.LogUpdate(ctx, e.BaseURL, e.Summary, e.Category, e.FullURL, e.Details)
-	checkContents(ctx, t, []entry{ev, e})
+	reporter.LogUpdate(ctx, e.BaseURL, e.Summary, e.FullURL, e.Details)
+	checkContents(ctx, t, []entry{e})
 
-	reporter.LogViolationf(ctx, e.BaseURL, e.Summary, e.Category, e.FullURL, "%s", e.Details)
-	checkContents(ctx, t, []entry{ev, e, ev})
+	reporter.LogViolation(ctx, ev.BaseURL, ev.Summary, ev.FullURL, ev.Details)
+	checkContents(ctx, t, []entry{e, ev})
+
+	reporter.LogUpdatef(ctx, e.BaseURL, e.Summary, e.FullURL, "%s", e.Details)
+	checkContents(ctx, t, []entry{e, ev, e})
 }
 
 func TestMain(m *testing.M) {

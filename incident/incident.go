@@ -30,12 +30,12 @@ type Reporter interface {
 	// multiple similar incidents to allow aggregation. Information that
 	// varies between instances of the 'same' incident should be included in
 	// the fullURL or details field.
-	LogUpdate(ctx context.Context, baseURL, summary, category, fullURL, details string)
-	LogUpdatef(ctx context.Context, baseURL, summary, category, fullURL, detailsFmt string, args ...interface{})
+	LogUpdate(ctx context.Context, baseURL, summary, fullURL, details string)
+	LogUpdatef(ctx context.Context, baseURL, summary, fullURL, detailsFmt string, args ...interface{})
 
 	// LogViolation records a RFC/Policy violation incident with the given parameters.
-	LogViolation(ctx context.Context, baseURL, summary, category, fullURL, details string)
-	LogViolationf(ctx context.Context, baseURL, summary, category, fullURL, detailsFmt string, args ...interface{})
+	LogViolation(ctx context.Context, baseURL, summary, fullURL, details string)
+	LogViolationf(ctx context.Context, baseURL, summary, fullURL, detailsFmt string, args ...interface{})
 }
 
 // LoggingReporter implements the Reporter interface by simply emitting
@@ -44,21 +44,21 @@ type LoggingReporter struct {
 }
 
 // LogUpdate emits a log message for the incident details.
-func (l *LoggingReporter) LogUpdate(ctx context.Context, baseURL, summary, category, fullURL, details string) {
-	glog.Infof("%s: %s (%s %s)\n  %s", baseURL, summary, category, fullURL, details)
+func (l *LoggingReporter) LogUpdate(ctx context.Context, baseURL, summary, fullURL, details string) {
+	glog.Infof("%s: %s (%s)\n  %s", baseURL, summary, fullURL, details)
 }
 
 // LogViolation emits a log message for the incident details.
 func (l *LoggingReporter) LogViolation(ctx context.Context, baseURL, summary, category, fullURL, details string) {
-	glog.Errorf("%s: %s (%s %s)\n  %s", baseURL, summary, category, fullURL, details)
+	glog.Errorf("%s: %s (%s)\n  %s", baseURL, summary, fullURL, details)
 }
 
 // LogUpdatef emits a log message for the incident details, formatting parameters along the way.
-func (l *LoggingReporter) LogUpdatef(ctx context.Context, baseURL, summary, category, fullURL, detailsFmt string, args ...interface{}) {
-	glog.Infof("%s: %s (%s %s)\n  %s", baseURL, summary, category, fullURL, fmt.Sprintf(detailsFmt, args...))
+func (l *LoggingReporter) LogUpdatef(ctx context.Context, baseURL, summary, fullURL, detailsFmt string, args ...interface{}) {
+	glog.Infof("%s: %s (%s)\n  %s", baseURL, summary, fullURL, fmt.Sprintf(detailsFmt, args...))
 }
 
 // LogUpdatef emits a log message for the incident details, formatting parameters along the way.
-func (l *LoggingReporter) LogViolationf(ctx context.Context, baseURL, summary, category, fullURL, detailsFmt string, args ...interface{}) {
-	glog.Errorf("%s: %s (%s %s)\n  %s", baseURL, summary, category, fullURL, fmt.Sprintf(detailsFmt, args...))
+func (l *LoggingReporter) LogViolationf(ctx context.Context, baseURL, summary, fullURL, detailsFmt string, args ...interface{}) {
+	glog.Errorf("%s: %s (%s)\n  %s", baseURL, summary, fullURL, fmt.Sprintf(detailsFmt, args...))
 }
