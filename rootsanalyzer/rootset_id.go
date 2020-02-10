@@ -26,7 +26,7 @@ import (
 
 func GenerateCertID(root *x509.Certificate) ([32]byte, error) {
 	if root == nil {
-		return [32]byte{}, fmt.Errorf("Unable to generate root-ID for nil")
+		return [32]byte{}, fmt.Errorf("unable to generate root-ID for nil")
 	}
 	return sha256.Sum256(root.Raw), nil
 }
@@ -37,7 +37,7 @@ func GenerateSetID(roots []*x509.Certificate) (*storage.RootSetID, error) {
 	for _, r := range roots {
 		certID, err := GenerateCertID(r)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to generate ID for root-set: %s", err)
+			return nil, fmt.Errorf("unable to generate ID for certificate %q: %s", r.Subject, err)
 		}
 		if !(rootIDSet[certID]) {
 			rootIDSet[certID] = true

@@ -49,7 +49,7 @@ func TestCertIDOnValid(t *testing.T) {
 func hexDecodeValid(s string, t *testing.T) []byte {
 	decoded, err := hex.DecodeString(s)
 	if err != nil {
-		t.Errorf("Unexpected error while preparing testdata: %s", err)
+		t.Fatalf("Unexpected error while preparing testdata: %s", err)
 	}
 	return decoded
 }
@@ -94,7 +94,7 @@ func TestGenerateSetID(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			gotSetID, gotErr := GenerateSetID(test.roots)
 			if gotErr != nil {
-				t.Errorf("Nil error expected, got %v", gotErr)
+				t.Fatalf("Nil error expected, got %v", gotErr)
 			}
 			if *gotSetID != test.wantSetID {
 				t.Errorf("Got cert-ID %x for nil certificate, want %x", string(*gotSetID), test.wantSetID)
