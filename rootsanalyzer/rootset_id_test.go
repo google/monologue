@@ -25,8 +25,7 @@ import (
 )
 
 func TestCertIDOnNil(t *testing.T) {
-	var m SHAIDMaker
-	_, gotErr := m.GenerateCertID(nil)
+	_, gotErr := GenerateCertID(nil)
 	if gotErr == nil {
 		t.Errorf("Error expected, got nil")
 	}
@@ -38,8 +37,7 @@ func TestCertIDOnValid(t *testing.T) {
 	copy(wantID[:], decoded[:32])
 	cert, _ := x509util.CertificateFromPEM([]byte(testdata.RootCertPEM))
 
-	var m SHAIDMaker
-	gotCertID, gotErr := m.GenerateCertID(cert)
+	gotCertID, gotErr := GenerateCertID(cert)
 	if gotErr != nil {
 		t.Errorf("Nil error expected, got %v", gotErr)
 	}
@@ -94,8 +92,7 @@ func TestGenerateSetID(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			var m SHAIDMaker
-			gotSetID, gotErr := m.GenerateSetID(test.roots)
+			gotSetID, gotErr := GenerateSetID(test.roots)
 			if gotErr != nil {
 				t.Errorf("Nil error expected, got %v", gotErr)
 			}

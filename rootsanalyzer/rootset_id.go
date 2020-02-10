@@ -24,22 +24,18 @@ import (
 	"github.com/google/monologue/storage"
 )
 
-// SHAIDMaker is SHA256-based implementation IDMaker for root certificates ID generation.
-type SHAIDMaker struct {
-}
-
-func (m *SHAIDMaker) GenerateCertID(root *x509.Certificate) ([32]byte, error) {
+func GenerateCertID(root *x509.Certificate) ([32]byte, error) {
 	if root == nil {
 		return [32]byte{}, fmt.Errorf("Unable to generate root-ID for nil")
 	}
 	return sha256.Sum256(root.Raw), nil
 }
 
-func (m *SHAIDMaker) GenerateSetID(roots []*x509.Certificate) (*storage.RootSetID, error) {
+func GenerateSetID(roots []*x509.Certificate) (*storage.RootSetID, error) {
 	var dedupRootIDs []string
 	rootIDSet := make(map[[32]byte]bool)
 	for _, r := range roots {
-		certID, err := m.GenerateCertID(r)
+		certID, err := GenerateCertID(r)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to generate ID for root-set: %s", err)
 		}
