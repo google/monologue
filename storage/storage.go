@@ -44,6 +44,9 @@ type RootsWriter interface {
 	WriteRoots(ctx context.Context, l *ctlog.Log, roots []*x509.Certificate, receivedAt time.Time) error
 }
 
+// RootSetID uniquely identifies a specific set of certificates, regardless of their order.
+type RootSetID string
+
 // RootsReader is an interface for reading root certificates retrieved from an earlier CT get-roots call.
 type RootsReader interface {
 	// WatchRoots monitors storage for get-roots responses and communicates their content to the caller.
