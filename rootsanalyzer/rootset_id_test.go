@@ -50,7 +50,7 @@ func TestCertIDOnValid(t *testing.T) {
 		t.Errorf("Nil error expected, got %v", gotErr)
 	}
 	if gotCertID != wantID {
-		t.Errorf("Got cert-ID %x for nil certificate, want %x", string(gotCertID[:]), wantID)
+		t.Errorf("Got cert-ID %x for root certificate, want %x", string(gotCertID[:]), wantID)
 	}
 }
 
@@ -97,7 +97,7 @@ func TestGenerateSetID(t *testing.T) {
 				t.Fatalf("Nil error expected, got %v", gotErr)
 			}
 			if *gotSetID != test.wantSetID {
-				t.Errorf("Got cert-ID %x for nil certificate, want %x", string(*gotSetID), test.wantSetID)
+				t.Errorf("Got cert-ID %x for root certificate, want %x", string(*gotSetID), test.wantSetID)
 			}
 		})
 	}
