@@ -31,13 +31,13 @@ func GenerateCertID(root *x509.Certificate) ([32]byte, error) {
 	return sha256.Sum256(root.Raw), nil
 }
 
-func GenerateSetID(roots []*x509.Certificate) (*storage.RootSetID, error) {
+func GenerateSetID(roots []*x509.Certificate) (storage.RootSetID, error) {
 	var dedupRootIDs []string
 	rootIDSet := make(map[[32]byte]bool)
 	for _, r := range roots {
 		certID, err := GenerateCertID(r)
 		if err != nil {
-			return nil, fmt.Errorf("unable to generate ID for certificate %q: %s", r.Subject, err)
+			return "", fmt.Errorf("unable to generate ID for certificate %q: %s", r.Subject, err)
 		}
 		if !(rootIDSet[certID]) {
 			rootIDSet[certID] = true
@@ -51,6 +51,5 @@ func GenerateSetID(roots []*x509.Certificate) (*storage.RootSetID, error) {
 	// concatenate roots IDs
 	concat := strings.Join(dedupRootIDs[:], "")
 	concatHash := sha256.Sum256([]byte(concat))
-	setID := storage.RootSetID(string(concatHash[:]))
-	return &setID, nil
+	return storage.RootSetID(string(concatHash[:])), nil
 }

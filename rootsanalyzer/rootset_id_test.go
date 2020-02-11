@@ -96,8 +96,8 @@ func TestGenerateSetID(t *testing.T) {
 			if gotErr != nil {
 				t.Fatalf("Nil error expected, got %v", gotErr)
 			}
-			if *gotSetID != test.wantSetID {
-				t.Errorf("Got cert-ID %x for root certificate, want %x", string(*gotSetID), test.wantSetID)
+			if gotSetID != test.wantSetID {
+				t.Errorf("Got cert-ID %x for root certificate, want %x", string(gotSetID), test.wantSetID)
 			}
 		})
 	}
