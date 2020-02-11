@@ -24,6 +24,7 @@ import (
 	"github.com/google/monologue/storage"
 )
 
+// GenerateCertID returns SHA-256 of certificate's DER representation.
 func GenerateCertID(root *x509.Certificate) ([32]byte, error) {
 	if root == nil {
 		return [32]byte{}, fmt.Errorf("unable to generate root-ID for nil")
@@ -31,6 +32,8 @@ func GenerateCertID(root *x509.Certificate) ([32]byte, error) {
 	return sha256.Sum256(root.Raw), nil
 }
 
+// GenerateSetID returns ID for a set of root-certificates.
+// Order or multi-entries of a same certificate do not influence the ID.
 func GenerateSetID(roots []*x509.Certificate) (storage.RootSetID, error) {
 	var dedupRootIDs []string
 	rootIDSet := make(map[[32]byte]bool)

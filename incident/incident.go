@@ -49,7 +49,7 @@ func (l *LoggingReporter) LogUpdate(ctx context.Context, baseURL, summary, fullU
 }
 
 // LogViolation emits a log message for the incident details.
-func (l *LoggingReporter) LogViolation(ctx context.Context, baseURL, summary, category, fullURL, details string) {
+func (l *LoggingReporter) LogViolation(ctx context.Context, baseURL, summary, fullURL, details string) {
 	glog.Errorf("%s: %s (%s)\n  %s", baseURL, summary, fullURL, details)
 }
 
