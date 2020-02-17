@@ -15,19 +15,15 @@
 package mysql
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"flag"
-	"fmt"
-	"io/ioutil"
 	"os"
-	"strings"
 	"testing"
-	"time"
 
 	"github.com/golang/glog"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/monologue/storage/mysql/testutil"
 
 	_ "github.com/go-sql-driver/mysql" // Load MySQL driver
 )
@@ -38,7 +34,7 @@ type entry struct {
 	FullURL, Details string
 }
 
-func checkContents(ctx context.Context, t *testing.T, want []entry) {
+func checkContents(ctx context.Context, testDB *sql.DB, t *testing.T, want []entry) {
 	t.Helper()
 
 	tx, err := testDB.BeginTx(ctx, nil /* opts */)
@@ -70,9 +66,9 @@ func checkContents(ctx context.Context, t *testing.T, want []entry) {
 
 func TestLogf(t *testing.T) {
 	ctx := context.Background()
-	cleanTestDB(ctx)
+	testutil.CleanTestDB(ctx, testDB, "Incidents")
 
-	checkContents(ctx, t, nil)
+	checkContents(ctx, testDB, t, nil)
 
 	reporter, err := NewMySQLReporter(ctx, testDB, "unittest")
 	if err != nil {
@@ -83,114 +79,34 @@ func TestLogf(t *testing.T) {
 	ev := entry{BaseURL: "base", Summary: "summary", IsViolation: true, FullURL: "full", Details: "blah"}
 
 	reporter.LogUpdate(ctx, e.BaseURL, e.Summary, e.FullURL, e.Details)
-	checkContents(ctx, t, []entry{e})
+	checkContents(ctx, testDB, t, []entry{e})
 
 	reporter.LogViolation(ctx, ev.BaseURL, ev.Summary, ev.FullURL, ev.Details)
-	checkContents(ctx, t, []entry{e, ev})
+	checkContents(ctx, testDB, t, []entry{e, ev})
 
 	reporter.LogUpdatef(ctx, e.BaseURL, e.Summary, e.FullURL, "%s", e.Details)
-	checkContents(ctx, t, []entry{e, ev, e})
+	checkContents(ctx, testDB, t, []entry{e, ev, e})
 }
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-	if err := mySQLAvailable(); err != nil {
+	if err := testutil.MySQLAvailable(); err != nil {
 		glog.Errorf("MySQL not available, skipping all MySQL storage tests: %v", err)
 		return
 	}
 	ctx := context.Background()
 	var err error
-	testDB, err = newIncidentDB(ctx)
+	testDB, err = testutil.NewDB(ctx, incidentSQL)
 	if err != nil {
 		glog.Exitf("failed to create test database: %v", err)
 	}
 	defer testDB.Close()
-	cleanTestDB(ctx)
+	testutil.CleanTestDB(ctx, testDB, "Incidents")
 	ec := m.Run()
 	os.Exit(ec)
 }
 
 var (
 	testDB      *sql.DB
-	dataSource  = "root@tcp(127.0.0.1)/"
 	incidentSQL = "incident.sql"
 )
-
-// mySQLAvailable indicates whether a default MySQL database is available.
-func mySQLAvailable() error {
-	db, err := sql.Open("mysql", dataSource)
-	if err != nil {
-		return fmt.Errorf("sql.Open(): %v", err)
-	}
-	defer db.Close()
-	if err := db.Ping(); err != nil {
-		return fmt.Errorf("db.Ping(): %v", err)
-	}
-	return nil
-}
-
-// newEmptyDB creates a new, empty database.
-func newEmptyDB(ctx context.Context) (*sql.DB, error) {
-	db, err := sql.Open("mysql", dataSource)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create a randomly-named database and then connect using the new name.
-	name := fmt.Sprintf("mono_%v", time.Now().UnixNano())
-
-	stmt := fmt.Sprintf("CREATE DATABASE %v", name)
-	if _, err := db.ExecContext(ctx, stmt); err != nil {
-		return nil, fmt.Errorf("error running statement %q: %v", stmt, err)
-	}
-	db.Close()
-
-	db, err = sql.Open("mysql", dataSource+name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open new database %q: %v", name, err)
-	}
-	return db, db.Ping()
-}
-
-// newIncidentDB creates an empty database with the incident schema.
-func newIncidentDB(ctx context.Context) (*sql.DB, error) {
-	db, err := newEmptyDB(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create empty DB: %v", err)
-	}
-
-	sqlBytes, err := ioutil.ReadFile(incidentSQL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read schema SQL: %v", err)
-	}
-
-	for _, stmt := range strings.Split(sanitize(string(sqlBytes)), ";") {
-		stmt = strings.TrimSpace(stmt)
-		if stmt == "" {
-			continue
-		}
-		if _, err := db.ExecContext(ctx, stmt); err != nil {
-			return nil, fmt.Errorf("error running statement %q: %v", stmt, err)
-		}
-	}
-	return db, nil
-}
-
-func sanitize(script string) string {
-	buf := &bytes.Buffer{}
-	for _, line := range strings.Split(string(script), "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" || line[0] == '#' || strings.Index(line, "--") == 0 {
-			continue // skip empty lines and comments
-		}
-		buf.WriteString(line)
-		buf.WriteString("\n")
-	}
-	return buf.String()
-}
-
-func cleanTestDB(ctx context.Context) {
-	if _, err := testDB.ExecContext(ctx, fmt.Sprintf("DELETE FROM Incidents")); err != nil {
-		glog.Exitf("Failed to delete rows in Incidents: %v", err)
-	}
-}
