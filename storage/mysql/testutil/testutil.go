@@ -28,9 +28,8 @@ import (
 	_ "github.com/go-sql-driver/mysql" // Load MySQL driver
 )
 
-
 var (
-	dataSource  = "root@tcp(127.0.0.1)/"
+	dataSource = "root@tcp(127.0.0.1)/"
 )
 
 // MySQLAvailable indicates whether a default MySQL database is available.
