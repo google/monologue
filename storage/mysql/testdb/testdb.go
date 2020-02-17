@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package testutil
+// testdb contains helper functions for testing mysql storage
+package testdb
 
 import (
 	"bytes"
@@ -69,7 +70,7 @@ func newEmptyDB(ctx context.Context) (*sql.DB, error) {
 }
 
 // NewDB creates an empty database with the given schema.
-func NewDB(ctx context.Context, schemaPath string) (*sql.DB, error) {
+func New(ctx context.Context, schemaPath string) (*sql.DB, error) {
 	db, err := newEmptyDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create empty DB: %v", err)
@@ -105,7 +106,7 @@ func sanitize(script string) string {
 	return buf.String()
 }
 
-func CleanTestDB(ctx context.Context, testDB *sql.DB, name string) {
+func Clean(ctx context.Context, testDB *sql.DB, name string) {
 	if _, err := testDB.ExecContext(ctx, fmt.Sprintf("DELETE FROM %s", name)); err != nil {
 		glog.Exitf("Failed to delete rows in %s: %v", name, err)
 	}

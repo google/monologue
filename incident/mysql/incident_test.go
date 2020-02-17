@@ -23,7 +23,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/monologue/storage/mysql/testutil"
+	"github.com/google/monologue/storage/mysql/testdb"
 
 	_ "github.com/go-sql-driver/mysql" // Load MySQL driver
 )
@@ -66,7 +66,7 @@ func checkContents(ctx context.Context, testDB *sql.DB, t *testing.T, want []ent
 
 func TestLogf(t *testing.T) {
 	ctx := context.Background()
-	testutil.CleanTestDB(ctx, testDB, "Incidents")
+	testdb.Clean(ctx, testDB, "Incidents")
 
 	checkContents(ctx, testDB, t, nil)
 
@@ -90,18 +90,18 @@ func TestLogf(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-	if err := testutil.MySQLAvailable(); err != nil {
+	if err := testdb.MySQLAvailable(); err != nil {
 		glog.Errorf("MySQL not available, skipping all MySQL storage tests: %v", err)
 		return
 	}
 	ctx := context.Background()
 	var err error
-	testDB, err = testutil.NewDB(ctx, incidentSQL)
+	testDB, err = testdb.New(ctx, incidentSQL)
 	if err != nil {
 		glog.Exitf("failed to create test database: %v", err)
 	}
 	defer testDB.Close()
-	testutil.CleanTestDB(ctx, testDB, "Incidents")
+	testdb.Clean(ctx, testDB, "Incidents")
 	ec := m.Run()
 	os.Exit(ec)
 }
