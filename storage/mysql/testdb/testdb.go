@@ -62,7 +62,7 @@ func newEmptyDB(ctx context.Context) (*sql.DB, error) {
 	}
 	db.Close()
 
-	db, err = sql.Open("mysql", dataSource+name)
+	db, err = sql.Open("mysql", dataSource+name+"?parseTime=true")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open new database %q: %v", name, err)
 	}

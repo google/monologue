@@ -3,6 +3,7 @@ module github.com/google/monologue
 go 1.13
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.4.1
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/certificate-transparency-go v1.0.22-0.20200117142630-6f5c98d767a3
