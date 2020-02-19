@@ -81,14 +81,14 @@ func TestLogf(t *testing.T) {
 	reporter.LogViolation(ctx, e.BaseURL, e.Summary, e.FullURL, e.Details)
 	checkContents(ctx, testDB, t, []entry{ev})
 
-/*
-	reporter.LogViolation(ctx, ev.BaseURL, ev.Summary, ev.FullURL, ev.Details)
-	checkContents(ctx, testDB, t, []entry{e, ev})
+	/*
+	   	reporter.LogViolation(ctx, ev.BaseURL, ev.Summary, ev.FullURL, ev.Details)
+	   	checkContents(ctx, testDB, t, []entry{e, ev})
 
-/*
+	   /*
 
-	reporter.LogUpdatef(ctx, e.BaseURL, e.Summary, e.FullURL, "%s", e.Details)
-	checkContents(ctx, testDB, t, []entry{e, ev, e}) */
+	   	reporter.LogUpdatef(ctx, e.BaseURL, e.Summary, e.FullURL, "%s", e.Details)
+	   	checkContents(ctx, testDB, t, []entry{e, ev, e}) */
 }
 
 func TestMain(m *testing.M) {

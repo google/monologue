@@ -26,17 +26,17 @@ import (
 	"github.com/google/monologue/rootsanalyzer"
 )
 
-// rootStore implements storage.RootsWriter and RootsReader interfaces.
-type rootStore struct {
+// rootStore implements storage.RootsWriter interface.
+type RootStore struct {
 	rootDB *sql.DB
 }
 
 // NewRootStore builds an root-store instance that records roots in a MySQL database.
-func NewRootStore(ctx context.Context, db *sql.DB) (*rootStore, error) {
-	return &rootStore{rootDB: db}, nil
+func NewRootStore(ctx context.Context, db *sql.DB) (*RootStore, error) {
+	return &RootStore{rootDB: db}, nil
 }
 
-func (rs *rootStore) WriteRoots(ctx context.Context, l *ctlog.Log, roots []*x509.Certificate, receivedAt time.Time) error {
+func (rs *RootStore) WriteRoots(ctx context.Context, l *ctlog.Log, roots []*x509.Certificate, receivedAt time.Time) error {
 	rootSetID, err := rootsanalyzer.GenerateSetID(roots)
 	if err != nil {
 		return fmt.Errorf("unable to generate ID for root-set %v: %s", roots, err)
