@@ -50,7 +50,7 @@ func (rs *rootStore) WriteRoots(ctx context.Context, l *ctlog.Log, roots []*x509
 			return fmt.Errorf("WriteRoots: %s", err)
 		}
 
-		if _, err = rs.rootDB.ExecContext(ctx, "INSERT INTO Roots(Id, DER) VALUES (?, ?) ON DUPLICATE KEY UPDATE Id=Id;", rootID[:], r.Raw); err != nil {
+		if _, err = rs.rootDB.ExecContext(ctx, "INSERT INTO Roots(ID, DER) VALUES (?, ?) ON DUPLICATE KEY UPDATE ID=ID;", rootID[:], r.Raw); err != nil {
 			return fmt.Errorf("WriteRoots: %s", err)
 		}
 

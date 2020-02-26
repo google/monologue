@@ -103,7 +103,7 @@ func checkContents(ctx context.Context, t *testing.T, want []rootEntry, wantSets
 	defer tx.Commit()
 
 	// Roots
-	rows, err := tx.QueryContext(ctx, "SELECT Id, DER FROM Roots;")
+	rows, err := tx.QueryContext(ctx, "SELECT ID, DER FROM Roots")
 	if err != nil {
 		t.Fatalf("failed to query rows: %v", err)
 	}
@@ -162,10 +162,10 @@ func checkContents(ctx context.Context, t *testing.T, want []rootEntry, wantSets
 		gotO = append(gotO, e)
 	}
 	if err := obrows.Err(); err != nil {
-		t.Errorf("rootsetobservation table iteration failed: %v", err)
+		t.Errorf("RootSetObservations table iteration failed: %v", err)
 	}
 	if diff := cmp.Diff(gotO, wantObservations); diff != "" {
-		t.Errorf("rootsetobservation table: diff (-got +want)\n%s", diff)
+		t.Errorf("RootSetObservations table: diff (-got +want)\n%s", diff)
 	}
 }
 
@@ -320,5 +320,5 @@ func TestMain(m *testing.M) {
 
 var (
 	testDB       *sql.DB
-	rootStoreSQL = "rootStore.sql"
+	rootStoreSQL = "root_store.sql"
 )
