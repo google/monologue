@@ -24,22 +24,23 @@ import (
 	"github.com/google/certificate-transparency-go/x509"
 	"github.com/google/monologue/ctlog"
 	"github.com/google/monologue/rootsanalyzer"
+	"github.com/google/monologue/storage"
 )
 
-// rootStore implements storage.RootsWriter interface.
-type RootStore struct {
+// RootStore implements storage.RootsWriter interface.
+type rootStore struct {
 	rootDB *sql.DB
 }
 
-// NewRootStore builds an root-store instance that records roots in a MySQL database.
-func NewRootStore(ctx context.Context, db *sql.DB) (*RootStore, error) {
-	return &RootStore{rootDB: db}, nil
+// NewRootStore builds an RootStore instance that records root certificates in a MySQL database.
+func NewRootStore(ctx context.Context, db *sql.DB) storage.RootsWriter {
+	return &rootStore{rootDB: db}
 }
 
-func (rs *RootStore) WriteRoots(ctx context.Context, l *ctlog.Log, roots []*x509.Certificate, receivedAt time.Time) error {
+func (rs *rootStore) WriteRoots(ctx context.Context, l *ctlog.Log, roots []*x509.Certificate, receivedAt time.Time) error {
 	rootSetID, err := rootsanalyzer.GenerateSetID(roots)
 	if err != nil {
-		return fmt.Errorf("unable to generate ID for root-set %v: %s", roots, err)
+		return fmt.Errorf("unable to generate RootSetID: %s", err)
 	}
 	rootSetIDBytes := []byte(rootSetID)
 
@@ -50,16 +51,16 @@ func (rs *RootStore) WriteRoots(ctx context.Context, l *ctlog.Log, roots []*x509
 		}
 
 		if _, err = rs.rootDB.ExecContext(ctx, "INSERT INTO Roots(Id, DER) VALUES (?, ?) ON DUPLICATE KEY UPDATE Id=Id;", rootID[:], r.Raw); err != nil {
-			return fmt.Errorf("WriteRoots %s", err)
+			return fmt.Errorf("WriteRoots: %s", err)
 		}
 
 		if _, err = rs.rootDB.ExecContext(ctx, "INSERT INTO RootSets(RootSetID, RootID) VALUES (?, ?) ON DUPLICATE KEY UPDATE RootSetID=RootSetID;", rootSetIDBytes, rootID[:]); err != nil {
-			return fmt.Errorf("WriteRoots %s", err)
+			return fmt.Errorf("WriteRoots: %s", err)
 		}
 	}
 
 	if _, err = rs.rootDB.ExecContext(ctx, "INSERT INTO RootSetObservations(LogName, RootSetID, ReceivedAt) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE RootSetID=RootSetID;", l.Name, rootSetIDBytes, receivedAt); err != nil {
-		return fmt.Errorf("WriteRoots %s", err)
+		return fmt.Errorf("WriteRoots: %s", err)
 	}
 
 	return nil

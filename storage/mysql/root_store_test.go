@@ -281,14 +281,11 @@ func TestWriteRoots(t *testing.T) {
 			testdb.Clean(ctx, testDB, "RootSets")
 			testdb.Clean(ctx, testDB, "RootSetObservations")
 			checkContents(ctx, t, nil, nil, nil)
-			st, err := NewRootStore(ctx, testDB)
-			if err != nil {
-				t.Fatalf("failed to build RootStore: %v", err)
-			}
+			st := NewRootStore(ctx, testDB)
 
 			var gotErr bool
 			for _, rdt := range test.rootsData {
-				if err = st.WriteRoots(ctx, test.log, rdt.roots, rdt.receivedAt); err != nil {
+				if err := st.WriteRoots(ctx, test.log, rdt.roots, rdt.receivedAt); err != nil {
 					if !test.wantErr {
 						t.Fatalf("Storage.WriteRoots(ctx, %v, %v, %v) = %s, want nil", test.log, rdt.roots, rdt.receivedAt, err)
 					}
