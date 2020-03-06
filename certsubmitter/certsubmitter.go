@@ -67,7 +67,7 @@ func Run(ctx context.Context, lc *client.LogClient, ca *certgen.CA, sv *ct.Signa
 		}
 
 		// Verify the SCT.
-		errs := checkSCT(sct, chain, sv, l)
+		errs := checkSCT(sct, chain, sv, l, httpData.Timing.End)
 
 		// Log any errors found.
 		if len(errs) != 0 {
@@ -85,7 +85,7 @@ func Run(ctx context.Context, lc *client.LogClient, ca *certgen.CA, sv *ct.Signa
 	glog.Infof("%s: %s: stopped", l.URL, logStr)
 }
 
-func checkSCT(sct *ct.SignedCertificateTimestamp, chain []*x509.Certificate, sv *ct.SignatureVerifier, l *ctlog.Log) []error {
+func checkSCT(sct *ct.SignedCertificateTimestamp, chain []*x509.Certificate, sv *ct.SignatureVerifier, l *ctlog.Log, receivedAt time.Time) []error {
 	var errs []error
 
 	// Check that the SCT is version 1.
@@ -124,6 +124,12 @@ func checkSCT(sct *ct.SignedCertificateTimestamp, chain []*x509.Certificate, sv 
 		errs = append(errs, &errors.SignatureVerificationError{Err: err})
 	}
 
+	// Verify SCT timestamp.
+	sctTimestamp := ct.TimestampToTime(sct.Timestamp)
+	if receivedAt.Sub(sctTimestamp).Seconds() < 0 {
+		errs = append(errs, &SCTFromFutureError{ReceivedAt: receivedAt, Timestamp: sctTimestamp})
+	}
+
 	// TODO(katjoyce): Implement other SCT checks.
 
 	return errs
@@ -158,4 +164,15 @@ type SCTExtensionsError struct {
 
 func (e *SCTExtensionsError) Error() string {
 	return fmt.Sprintf("unexpected extensions data: %v", e.Extensions)
+}
+
+// SCTFromFutureError indicates that an SCT timestamp is fresher than time when
+// it was recieved.
+type SCTFromFutureError struct {
+	ReceivedAt time.Time
+	Timestamp  time.Time
+}
+
+func (e *SCTFromFutureError) Error() string {
+	return fmt.Sprintf("SCT with Timestamp %s received at %s", e.Timestamp.Format(time.RFC3339), e.ReceivedAt.Format(time.RFC3339))
 }

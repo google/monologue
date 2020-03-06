@@ -42,6 +42,7 @@ func TestCheckSCT(t *testing.T) {
 	tests := []struct {
 		desc         string
 		sct          *ct.AddChainResponse
+		receivedAt   time.Time
 		wantErrTypes []reflect.Type
 	}{
 		{
@@ -52,6 +53,7 @@ func TestCheckSCT(t *testing.T) {
 				Timestamp:  1512556025588,
 				Signature:  testonly.MustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="),
 			},
+			receivedAt: time.Unix(1512559800, 0),
 			wantErrTypes: []reflect.Type{
 				reflect.TypeOf(&SCTVersionError{}),
 				reflect.TypeOf(&errors.SignatureVerificationError{}), // Version is covered by the SCT signature, so changing the version also invalidates the signature.
@@ -64,6 +66,7 @@ func TestCheckSCT(t *testing.T) {
 				Timestamp: 1512556025588,
 				Signature: testonly.MustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="),
 			},
+			receivedAt: time.Unix(1512559800, 0),
 			wantErrTypes: []reflect.Type{
 				reflect.TypeOf(&SCTLogIDError{}), // Log ID is not covered by the SCT signature.
 			},
@@ -76,6 +79,7 @@ func TestCheckSCT(t *testing.T) {
 				Extensions: "data",
 				Signature:  testonly.MustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="),
 			},
+			receivedAt: time.Unix(1512559800, 0),
 			wantErrTypes: []reflect.Type{
 				reflect.TypeOf(&SCTExtensionsError{}),
 				reflect.TypeOf(&errors.SignatureVerificationError{}), // Extensions field is covered by the SCT signature, so changing the extensions data also invalidates the signature.
@@ -90,8 +94,22 @@ func TestCheckSCT(t *testing.T) {
 				Extensions: "",
 				Signature:  testonly.MustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3D="), // Last alpha-numeric character Q has been changed to D, so signature is now invalid.
 			},
+			receivedAt: time.Unix(1512559800, 0),
 			wantErrTypes: []reflect.Type{
 				reflect.TypeOf(&errors.SignatureVerificationError{}),
+			},
+		},
+		{
+			desc: "SCT from future",
+			sct: &ct.AddChainResponse{
+				ID:         testonly.MustB64Decode("CEEUmABxUywWGQRgvPxH/cJlOvopLHKzf/hjrinMyfA="),
+				Timestamp:  1512556025588,
+				Extensions: "",
+				Signature:  testonly.MustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="),
+			},
+			receivedAt: time.Unix(1512552600, 0),
+			wantErrTypes: []reflect.Type{
+				reflect.TypeOf(&SCTFromFutureError{}),
 			},
 		},
 		{
@@ -102,6 +120,7 @@ func TestCheckSCT(t *testing.T) {
 				Extensions: "",
 				Signature:  testonly.MustB64Decode("BAMARjBEAiAJAPO7EKykH4eOQ81kTzKCb4IEWzcxTBdbdRCHLFPLFAIgBEoGXDUtcIaF3M5HWI+MxwkCQbvqR9TSGUHDCZoOr3Q="),
 			},
+			receivedAt: time.Unix(1512559800, 0),
 		},
 	}
 
@@ -124,7 +143,7 @@ func TestCheckSCT(t *testing.T) {
 				t.Fatalf("error converting ct.AddChainResponse to ct.SignedCertificateTimestamp: %s", err)
 			}
 
-			errs := checkSCT(sct, chain, sv, ctl)
+			errs := checkSCT(sct, chain, sv, ctl, test.receivedAt)
 			if len(errs) != len(test.wantErrTypes) {
 				t.Fatalf("checkSCT(%v) = %v (%d errors), want errors of types %v (%d errors)", sct, errs, len(errs), test.wantErrTypes, len(test.wantErrTypes))
 			}
