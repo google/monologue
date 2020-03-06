@@ -126,8 +126,8 @@ func checkSCT(sct *ct.SignedCertificateTimestamp, chain []*x509.Certificate, sv 
 
 	// Verify SCT timestamp.
 	sctTimestamp := ct.TimestampToTime(sct.Timestamp)
-	// Consider only gaps bigger than 1 second
-	if receivedAt.Sub(sctTimestamp).Milliseconds() < -1000 {
+	// Consider only gaps bigger than 1 second as incidents.
+	if sctTimestamp.Sub(receivedAt).Milliseconds() > 1000 {
 		errs = append(errs, &SCTFromFutureError{ReceivedAt: receivedAt, Timestamp: sctTimestamp})
 	}
 
