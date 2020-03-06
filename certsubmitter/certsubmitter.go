@@ -45,13 +45,13 @@ const logStr = "Certificate Submitter"
 func Run(ctx context.Context, lc *client.LogClient, ca *certgen.CA, sv *ct.SignatureVerifier, st storage.APICallWriter, l *ctlog.Log, period time.Duration) {
 	glog.Infof("%s: %s: started with period %v", l.URL, logStr, period)
 	schedule.Every(ctx, period, func(ctx context.Context) {
-		chain, sct, err := issueAndSubmit(ctx, lc, ca, st, l, false /* isPreSubmit */)
+		chain, sct, receivedAt, err := issueAndSubmit(ctx, lc, ca, st, l, false /* isPreSubmit */)
 		if err != nil {
 			return
 		}
 
 		// Verify the SCT.
-		errs := checkSCT(sct, chain, sv, l, httpData.Timing.End)
+		errs := checkSCT(sct, chain, sv, l, *receivedAt)
 
 		// Log any errors found.
 		if len(errs) != 0 {
@@ -69,7 +69,7 @@ func Run(ctx context.Context, lc *client.LogClient, ca *certgen.CA, sv *ct.Signa
 	glog.Infof("%s: %s: stopped", l.URL, logStr)
 }
 
-func issueAndSubmit(ctx context.Context, lc *client.LogClient, ca *certgen.CA, st storage.APICallWriter, l *ctlog.Log, isPreChain bool) ([]*x509.Certificate, *ct.SignedCertificateTimestamp, error) {
+func issueAndSubmit(ctx context.Context, lc *client.LogClient, ca *certgen.CA, st storage.APICallWriter, l *ctlog.Log, isPreChain bool) ([]*x509.Certificate, *ct.SignedCertificateTimestamp, *time.Time, error) {
 	prefix := ""
 	if isPreChain {
 		prefix = "pre-"
@@ -85,7 +85,7 @@ func issueAndSubmit(ctx context.Context, lc *client.LogClient, ca *certgen.CA, s
 	}
 	if err != nil {
 		glog.Errorf("%s: %s: ca.Issue%sCertificateChain(): %s", l.URL, logStr, prefix, err)
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	glog.Infof("%s: %s: adding %schain...", l.URL, logStr, prefix)
@@ -107,7 +107,7 @@ func issueAndSubmit(ctx context.Context, lc *client.LogClient, ca *certgen.CA, s
 	if err := st.WriteAPICall(ctx, l, apiCall); err != nil {
 		glog.Errorf("%s: %s: error writing API Call %s: %s", l.URL, logStr, apiCall, err)
 	}
-	return chain, sct, nil
+	return chain, sct, &httpData.Timing.End, nil
 }
 
 func checkSCT(sct *ct.SignedCertificateTimestamp, chain []*x509.Certificate, sv *ct.SignatureVerifier, l *ctlog.Log, receivedAt time.Time) []error {
