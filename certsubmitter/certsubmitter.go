@@ -126,7 +126,8 @@ func checkSCT(sct *ct.SignedCertificateTimestamp, chain []*x509.Certificate, sv 
 
 	// Verify SCT timestamp.
 	sctTimestamp := ct.TimestampToTime(sct.Timestamp)
-	if receivedAt.Sub(sctTimestamp).Seconds() < 0 {
+	// Consider only gaps bigger than 1 second
+	if receivedAt.Sub(sctTimestamp).Milliseconds() < -1000 {
 		errs = append(errs, &SCTFromFutureError{ReceivedAt: receivedAt, Timestamp: sctTimestamp})
 	}
 
@@ -167,7 +168,7 @@ func (e *SCTExtensionsError) Error() string {
 }
 
 // SCTFromFutureError indicates that an SCT timestamp is fresher than time when
-// it was recieved.
+// it was received.
 type SCTFromFutureError struct {
 	ReceivedAt time.Time
 	Timestamp  time.Time
