@@ -44,9 +44,8 @@ const logStr = "Certificate Submitter"
 // the Log returns.
 func Run(ctx context.Context, lc *client.LogClient, ca *certgen.CA, sv *ct.SignatureVerifier, st storage.APICallWriter, l *ctlog.Log, period time.Duration) {
 	glog.Infof("%s: %s: started with period %v", l.URL, logStr, period)
-
 	schedule.Every(ctx, period, func(ctx context.Context) {
-		chain, sct, err := issueAndSubmit(ctx, lc, ca, st, l)
+		chain, sct, err := issueAndSubmit(ctx, lc, ca, st, l, false /* isPreSubmit */)
 		if err != nil {
 			return
 		}
@@ -70,21 +69,34 @@ func Run(ctx context.Context, lc *client.LogClient, ca *certgen.CA, sv *ct.Signa
 	glog.Infof("%s: %s: stopped", l.URL, logStr)
 }
 
-func issueAndSubmit(ctx context.Context, lc *client.LogClient, ca *certgen.CA, st storage.APICallWriter, l *ctlog.Log) ([]*x509.Certificate, *ct.SignedCertificateTimestamp, error) {
-	glog.Infof("%s: %s: issuing certificate chain...", l.URL, logStr)
+func issueAndSubmit(ctx context.Context, lc *client.LogClient, ca *certgen.CA, st storage.APICallWriter, l *ctlog.Log, isPreChain bool) ([]*x509.Certificate, *ct.SignedCertificateTimestamp, error) {
+	prefix := ""
+	if isPreChain {
+		prefix = "pre-"
+	}
+
+	glog.Infof("%s: %s: issuing %scertificate chain...", l.URL, logStr, prefix)
 	var chain []*x509.Certificate
 	var err error
-	chain, err = ca.IssueCertificateChain()
+	if isPreChain {
+		chain, err = ca.IssuePrecertificateChain()
+	} else {
+		chain, err = ca.IssueCertificateChain()
+	}
 	if err != nil {
-		glog.Errorf("%s: %s: ca.IssueCertificateChain(): %s", l.URL, logStr, err)
+		glog.Errorf("%s: %s: ca.Issue%sCertificateChain(): %s", l.URL, logStr, prefix, err)
 		return nil, nil, err
 	}
 
-	glog.Infof("%s: %s: adding chain...", l.URL, logStr)
+	glog.Infof("%s: %s: adding %schain...", l.URL, logStr, prefix)
 	var sct *ct.SignedCertificateTimestamp
 	var httpData *client.HTTPData
 	var addErr error
-	sct, httpData, addErr = lc.AddChain(chain)
+	if isPreChain {
+		sct, httpData, addErr = lc.AddPreChain(chain)
+	} else {
+		sct, httpData, addErr = lc.AddChain(chain)
+	}
 	if len(httpData.Body) > 0 {
 		glog.Infof("%s: %s: response: %s", l.URL, logStr, httpData.Body)
 	}
