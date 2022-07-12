@@ -84,10 +84,6 @@ main() {
     echo 'running go build'
     go build ./...
 
-    # Install test deps so that individual test runs below can reuse them.
-    echo 'installing test deps'
-    go test -i ./...
-
     local coverflags=""
     if [[ ${coverage} -eq 1 ]]; then
         coverflags="-covermode=atomic -coverprofile=coverage.txt"
