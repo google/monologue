@@ -2,7 +2,7 @@ version: ~> 1.0
 language: go
 go_import_path: github.com/google/monologue
 go:
-  - 1.13
+  - 1.18
 
 services:
   - mysql
@@ -10,10 +10,6 @@ services:
 cache:
   directories:
     - $GOPATH/pkg/mod
-
-env:
-  global:
-    - GO111MODULE=on
 
 jobs:
   include:
